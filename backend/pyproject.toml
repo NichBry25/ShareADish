@@ -6,5 +6,6 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi[standard]>=0.118.0",
+    "pymongo>=4.15.1",
     "transformers[torch]>=4.56.2",
 ]
