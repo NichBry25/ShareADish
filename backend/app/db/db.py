@@ -9,7 +9,6 @@ client = MongoClient(MONGO_URL)
 
 def ping_db():
     try:
-        # The ismaster command is cheap and does not require auth.
         client.admin.command('ping')
         print("MongoDB connection: Successful")
     except Exception as e:

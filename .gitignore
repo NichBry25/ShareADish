@@ -37,5 +37,7 @@ next-env.d.ts
 
 
 # python
+__pycache__/
+*_testing.py
 /backend/.venv
 mongodb.txt

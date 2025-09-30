@@ -1,36 +1,68 @@
-from pydantic import BaseModel
-from typing import List
+from typing import Optional
+from datetime import datetime, timezone
+from bson import ObjectId
+from pydantic import BaseModel, Field
+from .pyid import PyObjectId
 
-# Schema for comments
+# --- Comment Models ---
 class CommentBase(BaseModel):
-    id: int
-    recipe_id: int
-    user_id: int
     content: str
+    created_by: str  # User ID
 
-# Schema for creating a comment
 class CommentCreate(CommentBase):
     pass
 
-# Schema for returning comment information
-class CommentRead(CommentBase):
+class CommentDB(CommentBase):
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {
+            ObjectId: str,
+            datetime: lambda v: v.isoformat()
+        }
+
+class CommentResponse(CommentBase):
+    id: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# --- Recipe Models ---
+class RecipeBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    ingredients: list[str]
+    instructions: list[str]
+    comments: list[CommentResponse] = []  # fully embedded comments
+    created_by: str  # User ID
+    likes: int = 0
+    verified: bool = False
+
+class RecipeCreate(RecipeBase):
     pass
 
-# Schema for creating recipe
-class Recipe(BaseModel):
-    title: str
-    description: str
-    ingredients: str # TODO define how we store ingredients
-    instructions: List[str]
+class RecipeDB(RecipeBase):
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-# Schema for returning recipe information
-class RecipeRead(BaseModel):
-    id: int
-    title: str
-    description: str
-    ingredients: str # TODO define how we store ingredients
-    instructions: List[str]
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {
+            ObjectId: str,
+            datetime: lambda v: v.isoformat()
+        }
 
-class RecipeImage(BaseModel):
-    id: int
-    image_url: str
+class RecipeResponse(RecipeBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
