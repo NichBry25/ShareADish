@@ -1,6 +1,14 @@
-def main():
-    print("Hello from backend!")
+import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
+app = FastAPI(debug=True)
+
+origins = [
+    "http://localhost:3000",
+    # add the local ip for frontend as well
+]
 
 if __name__ == "__main__":
-    main()
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    # reload means auto-restart the server everytime a change is made

@@ -1,1 +1,1 @@
-# for pydantic
+from pydantic import BaseModel
