@@ -41,3 +41,7 @@ __pycache__/
 *_testing.py
 /backend/.venv
 mongodb.txt
+
+# dataset
+foundational.json
+legacy.json
