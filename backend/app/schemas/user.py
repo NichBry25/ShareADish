@@ -1,6 +1,7 @@
 from typing import Optional
 from .pyid import PyObjectId
 from bson import ObjectId
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 
 # --- Base schema ---
@@ -14,6 +15,7 @@ class UserCreate(UserBase):
 # --- Database model ---
 class UserDB(UserBase):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    created_at: datetime = Field(default_factory= datetime.now(timezone.utc))
     hashed_password: str
 
     class Config:

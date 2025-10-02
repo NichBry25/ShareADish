@@ -8,6 +8,7 @@ from .pyid import PyObjectId
 class CommentBase(BaseModel):
     content: str
     created_by: str  # User ID
+    image_url: Optional[str] = None
 
 class CommentCreate(CommentBase):
     pass
@@ -41,6 +42,7 @@ class RecipeBase(BaseModel):
     comments: list[CommentResponse] = []  # fully embedded comments
     created_by: str  # User ID
     likes: int = 0
+    original_prompt: str
     verified: bool = False
 
 class RecipeCreate(RecipeBase):

@@ -1,9 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from core.preload import preload 
+from .core.preload import preload 
+from .api import routers
 
-preload()  
+#preload()  
 
 app = FastAPI(debug=True)
 
@@ -11,6 +12,9 @@ origins = [
     "http://localhost:3000",
     # add the local ip for frontend as well
 ]
+
+for router in routers:
+    app.include_router(router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

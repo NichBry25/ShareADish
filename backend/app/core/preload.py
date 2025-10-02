@@ -1,4 +1,4 @@
-from core.config import settings
+from .config import settings
 import json
 
 foundation_data = None
