@@ -6,5 +6,5 @@ router = APIRouter(prefix="/user",
                    tags=["user"])
 
 @router.post("/")
-async def register_user(user_data: UserCreate, db=Depends(get_session)):
+async def register_route(user_data: UserCreate):
     print(user_data.model_dump)
