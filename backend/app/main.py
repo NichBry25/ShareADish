@@ -2,12 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.preload import preload 
-<<<<<<< HEAD
 from .api import routers
-=======
->>>>>>> 96ac8498c00b3b3ea07d20f4ecf9a8f8e7bd2cce
 
-#preload()  
+preload()  
 
 app = FastAPI(debug=True)
 
