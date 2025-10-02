@@ -4,7 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from .core.preload import preload 
 from .api import routers
 
-preload()  
+try:
+    preload()
+except FileNotFoundError:
+    pass  
 
 app = FastAPI(debug=True)
 
