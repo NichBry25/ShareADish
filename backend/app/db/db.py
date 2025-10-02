@@ -8,6 +8,8 @@ MONGO_URL = os.getenv("MONGO_URL")
 
 client = MongoClient(MONGO_URL)
 
+user_db = client['shareadish']['users']
+
 def ping_db():
     try:
         client.admin.command('ping')
