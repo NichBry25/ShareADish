@@ -9,10 +9,10 @@ def load_json(path):
         return json.load(f)
 
 
-def preload():
+def preload(load_data=False):
     global foundation_data, srlegacy_data
-    
-    foundation_data=load_json(settings.FOUNDATIONAL_PATH)
-    srlegacy_data=load_json(settings.SRLEGACY_PATH)
+    if(load_data):
+        foundation_data=load_json(settings.FOUNDATIONAL_PATH)
+        srlegacy_data=load_json(settings.SRLEGACY_PATH)
 
     print('preloaded')
