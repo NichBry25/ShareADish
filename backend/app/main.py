@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .core.preload import preload 
+from .core import preload
 from .api import routers
 
 try:

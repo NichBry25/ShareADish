@@ -2,11 +2,13 @@ from typing import Optional
 from .pyid import PyObjectId
 from bson import ObjectId
 from datetime import datetime, timezone
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 # --- Base schema ---
 class UserBase(BaseModel):
     username: str
+    model_config = ConfigDict(extra='forbid')
+    
 
 # --- Create input ---
 class UserCreate(UserBase):

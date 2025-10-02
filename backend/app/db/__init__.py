@@ -1,1 +1,1 @@
-from .db import client
+from .db import get_session

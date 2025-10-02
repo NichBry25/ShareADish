@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from fastapi import Depends
 from dotenv import load_dotenv
 import os 
 
@@ -13,6 +14,9 @@ def ping_db():
         print("MongoDB connection: Successful")
     except Exception as e:
         print(f"MongoDB connection: Failed - {e}")
+        
+def get_session():
+    return client
 
 if __name__ == "__main__":
     ping_db()

@@ -41,7 +41,8 @@ class RecipeBase(BaseModel):
     instructions: list[str]
     comments: list[CommentResponse] = []  # fully embedded comments
     created_by: str  # User ID
-    likes: int = 0
+    rating: Optional[float] = None
+    no_rated: Optional[int] = 0
     original_prompt: str
     verified: bool = False
 
