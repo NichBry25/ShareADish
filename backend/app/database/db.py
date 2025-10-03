@@ -1,14 +1,14 @@
 from pymongo import MongoClient
-from fastapi import Depends
 from dotenv import load_dotenv
 import os 
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-client = MongoClient(MONGO_URL)
+client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
+shareadish = client.get_database("shareadish")
 
-user_db = client['shareadish']['users']
+user_db = shareadish.get_collection("users")
 
 def ping_db():
     try:
@@ -22,3 +22,4 @@ def get_session():
 
 if __name__ == "__main__":
     ping_db()
+    user_db.insert_one({"username": "testuser", "password": "testpass"})
