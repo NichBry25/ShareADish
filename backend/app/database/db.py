@@ -1,14 +1,15 @@
 from pymongo import MongoClient
-from dotenv import load_dotenv
 import os 
 
-load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
 client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
 shareadish = client.get_database("shareadish")
 
 user_db = shareadish.get_collection("users")
+
+def print_url():
+    print(f"MONGO_URL: {MONGO_URL}")
 
 def ping_db():
     try:
@@ -19,6 +20,9 @@ def ping_db():
         
 def get_session():
     return client
+
+def close_session():
+    client.close()
 
 if __name__ == "__main__":
     ping_db()

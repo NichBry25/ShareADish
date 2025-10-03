@@ -7,5 +7,5 @@ router = APIRouter(prefix="/user",
 
 @router.post("/")
 async def register_route(user_data: UserCreate):
-    id = await register_user(user_data)
+    id = register_user(user_data)
     return id

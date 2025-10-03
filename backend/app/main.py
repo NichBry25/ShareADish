@@ -1,15 +1,27 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from .core import preload
+from .database import close_session
 from .api import routers
 
 try:
     preload()
 except FileNotFoundError:
-    pass  
+    pass
 
-app = FastAPI(debug=True)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup code
+    print("App Startup!")
+    yield
+    # shutdown code
+    close_session()
+    print("App Shutdown!")
+    
+
+app = FastAPI(debug=True, lifespan=lifespan)
 
 origins = [
     "http://localhost:3000",
