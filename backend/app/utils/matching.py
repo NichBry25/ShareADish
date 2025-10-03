@@ -4,28 +4,6 @@ from ..core.preload import preload
 from .normalize import normalize
 import re
 
-'''
-example AI output:
-
-{
-    "prompt": [], 
-    "title": "garlic and herb roasted cauliflower", 
-    "ingredients": [
-        "2 tablespoons olive oil", 
-        "1 large cauliflower, cut into florets", 
-        "2 teaspoons minced garlic", 
-        "\u00bd teaspoon salt", 
-        "\u00bd teaspoon dried herbs", 
-        "\u00bc cup water"
-    ], 
-    "method": [
-        "preheat oven to 220c\u00b0. in a large bowl, toss cauliflower florets with olive oil, minced garlic, salt, and dried herbs.", 
-        "spread the cauliflower in a single layer on a baking sheet and roast for 25 minutes, stirring halfway through.", 
-        "drizzle with water and roast for an additional 5 minutes."
-        ]
-}
-'''
-
 UNIT_MAP = {
     "teaspoon": 5, "teaspoons": 5, "tsp": 5,
 
@@ -242,7 +220,6 @@ def extract_amount(ingredient: str):
     
     for word in word_removed:
         ingredients_words.remove(word)  
-    print('ing',' '.join(ingredients_words))
     return (grams,' '.join(ingredients_words))
 
 
@@ -268,5 +245,5 @@ if __name__ == '__main__':
     preload(load_data=True)
     from ..core.preload import legacy_data, foundation_data # idfk, reload the variable, will probably cause me more problem down the line
 
-    print(match_ingredients(['1/2 large cauliflower, cut into florets']))
+    print(match_ingredients(['1 spiced chocolate brownie mix','1 small onion, chopped','1 cup quinoa, rinsed and drained']))
     print(extract_amount('1/2 large cauliflower, cut into florets'))
