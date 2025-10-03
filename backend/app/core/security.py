@@ -1,7 +1,7 @@
 from passlib.context import CryptContext
 import hashlib
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 def hash_password(password:str) -> str:
     """Hashes a password
@@ -12,10 +12,8 @@ def hash_password(password:str) -> str:
     Returns:
         str: hashed password
     """
-    sha = hashlib.sha256(password.encode("utf-8")).hexdigest()
-    return pwd_context.hash(sha)
+    return pwd_context.hash(password)
 
 def verify_password(plain_password:str, hashed_password: str) -> bool:
     """ Verifies a plain password against a hashed password retrieved using username."""
-    sha = hashlib.sha256(plain_password.encode("utf-8")).hexdigest()
-    pwd_context.verify(sha, hashed_password)
+    return pwd_context.verify(plain_password, hashed_password)
