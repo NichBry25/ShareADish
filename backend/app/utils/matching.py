@@ -2,6 +2,7 @@ from typing import List
 from rapidfuzz import fuzz, process
 from ..core.preload import preload
 from .normalize import normalize
+import re
 
 '''
 example AI output:
@@ -25,68 +26,57 @@ example AI output:
 }
 '''
 
-unit_map = {
-    # Volume
-    "teaspoon": 5,
-    "teaspoons": 5,
-    "tsp": 5,
+UNIT_MAP = {
+    "teaspoon": 5, "teaspoons": 5, "tsp": 5,
 
-    "tablespoon": 15,
-    "tablespoons": 15,
-    "tbsp": 15,
-    "tblsp": 15,
+    "tablespoon": 15, "tablespoons": 15, "tbsp": 15, "tblsp": 15,
 
-    "cup": 240, 
-    "cups": 240,
+    "cup": 240, "cups": 240,
 
-    "fluid ounce": 30,
-    "fluid ounces": 30,
-    "fl oz": 30,
+    "fluid ounce": 30, "fluid ounces": 30,"fl oz": 30,
 
-    "pint": 473,
-    "pints": 473,
+    "pint": 473, "pints": 473,
 
-    "quart": 946,
-    "quarts": 946,
+    "quart": 946, "quarts": 946,
 
-    "gallon": 3785,
-    "gallons": 3785,
+    "gallon": 3785, "gallons": 3785,
 
-    "liter": 1000,
-    "liters": 1000,
-    "l": 1000,
+    "liter": 1000, "liters": 1000, "l": 1000,
 
-    "milliliter": 1,
-    "milliliters": 1,
-    "ml": 1,
+    "milliliter": 1, "milliliters": 1, "ml": 1,
 
-    # Weight
-    "gram": 1,
-    "grams": 1,
-    "g": 1,
+    "gram": 1, "grams": 1, "g": 1,
 
-    "kilogram": 1000,
-    "kilograms": 1000,
-    "kg": 1000,
+    "kilogram": 1000, "kilograms": 1000, "kg": 1000,
 
-    "ounce": 28.35,
-    "ounces": 28.35,
-    "oz": 28.35,
+    "ounce": 28.35, "ounces": 28.35, "oz": 28.35,
 
-    "pound": 453.6,
-    "pounds": 453.6,
-    "lb": 453.6,
-    "lbs": 453.6,
+    "pound": 453.6,"pounds": 453.6, "lb": 453.6, "lbs": 453.6,
 
-    # Misc
-    "pinch": 0.36,    
-    "dash": 0.6,      
-    "drop": 0.05,     
-    "clove": 3,       
-    "slice": 15,      
-    "piece": 30       
+    "pinch": 0.36, "dash": 0.6, "drop": 0.05, "clove": 3, "slice": 15, "piece": 30, "a": 100       
 }
 
+
+FRACTION_MAP = {
+    "\u00BC": 0.25,   
+    "\u00BD": 0.5,    
+    "\u00BE": 0.75,   
+    "\u2150": 1/7,    
+    "\u2151": 1/9,    
+    "\u2152": 0.1,    
+    "\u2153": 1/3,    
+    "\u2154": 2/3,    
+    "\u2155": 0.2,    
+    "\u2156": 0.4,    
+    "\u2157": 0.6,    
+    "\u2158": 0.8,    
+    "\u2159": 1/6,    
+    "\u215A": 5/6,    
+    "\u215B": 0.125,  
+    "\u215C": 0.375,  
+    "\u215D": 0.625,  
+    "\u215E": 0.875   
+}
 
 AMBIGUOUS_MAP = { # To remove ambigiouty
     "chicken": "chicken breast boneless skinless raw",
@@ -105,6 +95,17 @@ AMBIGUOUS_MAP = { # To remove ambigiouty
     "oil": "oil vegetable"
 }
 
+# Words that dont affect ingredient identity
+NOISE_WORDS = [
+    "small", "medium", "large", "extra-large",
+    "chopped", "diced", "sliced", "minced", "crushed", "grated", "peeled", "ground", "shredded",
+    "fresh", "frozen", 
+    "optional", "whole",
+    "drained", "rinsed", "beaten", "divided",
+    "about", "around", "approximately",
+    "for", "serving", "taste", "cut", "into", "pieces", "bite-sized",
+    "and"
+]
 
 def get_result(data,ingredient):
     choices = [entry['description'] for entry in data]
@@ -123,12 +124,52 @@ def get_result(data,ingredient):
         })
     return results
     
+def extract_main_nutrients(nutrients):
+    return_val = {
+        'Protein': 0,
+        'Carbs': 0,
+        'Fiber': 0,
+        'Energy': 0,
+        'Unit_name': {
+            'Protein': '',
+            'Carbs': '',
+            'Fiber': '',
+            'Energy': ''
+        }
+    }
+
+    if not nutrients:
+        return return_val
+
+    if "Protein" in nutrients:
+        return_val['Protein'] = nutrients["Protein"][0]
+        return_val['Unit_name']['Protein'] = nutrients["Protein"][1]
+
+    if "Carbohydrate, by difference" in nutrients:
+        return_val['Carbs'] = nutrients["Carbohydrate, by difference"][0]
+        return_val['Unit_name']['Carbs'] = nutrients["Carbohydrate, by difference"][1]
+
+    if "Fiber, total dietary" in nutrients:
+        return_val['Fiber'] = nutrients["Fiber, total dietary"][0]
+        return_val['Unit_name']['Fiber'] = nutrients["Fiber, total dietary"][1]
+
+    if "Energy (Atwater General Factors)" in nutrients:
+        return_val['Energy'] = nutrients["Energy (Atwater General Factors)"][0]
+        return_val['Unit_name']['Energy'] = nutrients["Energy (Atwater General Factors)"][1]
+    elif "Energy (Atwater Specific Factors)" in nutrients:
+        return_val['Energy'] = nutrients["Energy (Atwater Specific Factors)"][0]
+        return_val['Unit_name']['Energy'] = nutrients["Energy (Atwater Specific Factors)"][1]
+
+    return return_val
+
 def search_ingredients(ingredient):
+    '''
+    for searching ingredients in database, returns info of ingredients with nutrition
+    '''
     ingredient = normalize(ingredient)
     for amb_word, _ in AMBIGUOUS_MAP.items():
         if fuzz.WRatio(ingredient,amb_word) > 70:
             ingredient = AMBIGUOUS_MAP[amb_word]
-
 
     results = []
     results.extend(get_result(foundation_data,ingredient))
@@ -136,18 +177,74 @@ def search_ingredients(ingredient):
     if not results or results[0]["score"] < 85:
         # Will prioritize getting results from foundational data first (most of it is raw ingredients) before legacy data (everything else)
         results.extend(get_result(legacy_data, ingredient))
-
-    return sorted(results, key=lambda x: x["score"], reverse=True)[:20]
     
+    filtered = []
+    for result in results:
+        filtered.append(result) if result['score'] > 60 else None 
+    
+    sorted(filtered, key=lambda x: x["score"], reverse=True)[:10]
 
-def extract_amount(ingredients: str):
+    nutrients = {
+        n["nutrient"]["name"]: (n["amount"], n["nutrient"]["unitName"])
+        for n in filtered[0]['match'].get("foodNutrients", [])
+    }
+
+    return extract_main_nutrients(nutrients)
+
+
+    
+def extract_amount(ingredient: str):
     '''
     used to strip the amount and the ingredients itself, to be passed to match ingredients
 
     eg:
     extract_amount('2 tablespoons olive oil') -> (15,'olive oil') // 15 grams
     '''
-    pass
+
+    ingredients_no_space = re.sub(r"[\s]","",normalize(ingredient)) # No space because sometimes ingredients is 1 400ml smthsmth
+    ingredients_words = ingredient.split()
+    grams = 100
+    word_removed = []
+
+    # Change fraction and detect units
+    for i,word in enumerate(ingredients_words):
+        if word in FRACTION_MAP.keys():
+            ingredients_words[i] = FRACTION_MAP[word]
+        if word in UNIT_MAP.keys():
+            grams = UNIT_MAP[word]
+            word_removed.append(word)
+
+    for word in word_removed:
+        ingredients_words.remove(word)  
+
+    # Remove unit
+    amount_match = re.search(r"(\d+\/\d+|\d+(\.\d+)?)", ingredients_no_space)
+    if amount_match:
+        fraction = amount_match.group(1)
+        if "/" in fraction:
+            num, denom = fraction.split("/")
+            number = float(num) / float(denom)
+        else:
+            number = float(fraction)
+    else:
+        number = 1.0  # default if no amount
+    
+    ingredients_words.remove(str(amount_match.group(1)))
+    
+    grams *= number
+
+    # Remove noise
+    word_removed = []
+    for word in ingredients_words:
+        if word in NOISE_WORDS:
+            word_removed.append(word)
+    
+    for word in word_removed:
+        ingredients_words.remove(word)  
+    print('ingredient words: ', ingredients_words)
+
+    return (grams,' '.join(ingredients_words))
+
 
 def match_ingredients(ingredients_list: List[str]):
     '''
@@ -160,25 +257,12 @@ def match_ingredients(ingredients_list: List[str]):
     for a,i in amount_ing:
         search_ingredients(i)
         pass
+    
 
 
 if __name__ == '__main__':
     preload(load_data=True)
     from ..core.preload import legacy_data, foundation_data # idfk, reload the variable, will probably cause me more problem down the line
 
-    match = search_ingredients('pork')
-
-    pork_match = match[0]['match']
-    print("Description:", pork_match['description'])
-    for nutrient in pork_match.get("foodNutrients", []):
-        n = nutrient["nutrient"]
-        print(f"{n['name']}: {nutrient.get('amount')} {n['unitName']}")
-
-    
-
-    
-
-
-    
-    
-    
+    print(search_ingredients('cauliflower, florets'))
+    print(extract_amount('1/2 large cauliflower, cut into florets'))
