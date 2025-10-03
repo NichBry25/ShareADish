@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from ...schemas import UserCreate, UserResponse, ErrorResponse
-from ...services import register_user, login_user
+from ...services import register_user, login_user, get_current_user
 
 router = APIRouter(prefix="/user",
                    tags=["user"])
@@ -18,9 +19,13 @@ async def register_route(user_data: UserCreate):
 
     return UserResponse(id=id, username=username)
 
-@router.get("/", response_model=dict, responses={401: {"model": ErrorResponse}})
-async def login_route(username: str, password: str):
-    is_logged_in = login_user(username, password)
-    if is_logged_in:
-        return {"message": "Login successful"}
-    raise HTTPException(status_code=401, detail="Invalid username or password")
+@router.post("/login", response_model=dict, responses={401: {"model": ErrorResponse}})
+async def login_route(form_data: OAuth2PasswordRequestForm = Depends()):
+    try:
+        return login_user(form_data.username, form_data.password)
+    except HTTPException as e:
+        raise e
+
+@router.get("/me", response_model=dict, responses={401: {"model": ErrorResponse}})
+async def me_route(current_user: dict = Depends(get_current_user)):
+    return current_user
