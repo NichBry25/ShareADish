@@ -124,7 +124,7 @@ def get_result(data,ingredient):
         })
     return results
     
-def extract_main_nutrients(nutrients):
+def extract_main_nutrients(amount,nutrients):
     return_val = {
         'Protein': 0,
         'Carbs': 0,
@@ -142,27 +142,27 @@ def extract_main_nutrients(nutrients):
         return return_val
 
     if "Protein" in nutrients:
-        return_val['Protein'] = nutrients["Protein"][0]
+        return_val['Protein'] = round((nutrients["Protein"][0]/100) * amount,3)
         return_val['Unit_name']['Protein'] = nutrients["Protein"][1]
 
     if "Carbohydrate, by difference" in nutrients:
-        return_val['Carbs'] = nutrients["Carbohydrate, by difference"][0]
+        return_val['Carbs'] = round((nutrients["Carbohydrate, by difference"][0]/100) * amount,3)
         return_val['Unit_name']['Carbs'] = nutrients["Carbohydrate, by difference"][1]
 
     if "Fiber, total dietary" in nutrients:
-        return_val['Fiber'] = nutrients["Fiber, total dietary"][0]
+        return_val['Fiber'] = round((nutrients["Fiber, total dietary"][0]/100) * amount,3)
         return_val['Unit_name']['Fiber'] = nutrients["Fiber, total dietary"][1]
 
     if "Energy (Atwater General Factors)" in nutrients:
-        return_val['Energy'] = nutrients["Energy (Atwater General Factors)"][0]
+        return_val['Energy'] = round((nutrients["Energy (Atwater General Factors)"][0]/100) * amount,3)
         return_val['Unit_name']['Energy'] = nutrients["Energy (Atwater General Factors)"][1]
     elif "Energy (Atwater Specific Factors)" in nutrients:
-        return_val['Energy'] = nutrients["Energy (Atwater Specific Factors)"][0]
+        return_val['Energy'] = round((nutrients["Energy (Atwater Specific Factors)"][0]/100) * amount,3)
         return_val['Unit_name']['Energy'] = nutrients["Energy (Atwater Specific Factors)"][1]
 
     return return_val
 
-def search_ingredients(ingredient):
+def search_ingredients(amount,ingredient):
     '''
     for searching ingredients in database, returns info of ingredients with nutrition
     '''
@@ -181,6 +181,8 @@ def search_ingredients(ingredient):
     filtered = []
     for result in results:
         filtered.append(result) if result['score'] > 60 else None 
+    if not filtered:
+        return extract_main_nutrients({}) 
     
     sorted(filtered, key=lambda x: x["score"], reverse=True)[:10]
 
@@ -189,7 +191,7 @@ def search_ingredients(ingredient):
         for n in filtered[0]['match'].get("foodNutrients", [])
     }
 
-    return extract_main_nutrients(nutrients)
+    return extract_main_nutrients(amount,nutrients)
 
 
     
@@ -217,7 +219,7 @@ def extract_amount(ingredient: str):
     for word in word_removed:
         ingredients_words.remove(word)  
 
-    # Remove unit
+    # Get amount
     amount_match = re.search(r"(\d+\/\d+|\d+(\.\d+)?)", ingredients_no_space)
     if amount_match:
         fraction = amount_match.group(1)
@@ -226,10 +228,9 @@ def extract_amount(ingredient: str):
             number = float(num) / float(denom)
         else:
             number = float(fraction)
+        ingredients_words.remove(str(amount_match.group(1)))
     else:
         number = 1.0  # default if no amount
-    
-    ingredients_words.remove(str(amount_match.group(1)))
     
     grams *= number
 
@@ -241,28 +242,31 @@ def extract_amount(ingredient: str):
     
     for word in word_removed:
         ingredients_words.remove(word)  
-    print('ingredient words: ', ingredients_words)
-
+    print('ing',' '.join(ingredients_words))
     return (grams,' '.join(ingredients_words))
 
 
 def match_ingredients(ingredients_list: List[str]):
     '''
-    uses extract_amount on each ingredients, and fuzzy matches the ingredients
+    Parse amounts + match each ingredient with nutrition info
     '''
-    amount_ing = []
-    for i in ingredients_list:
-        amount_ing.append(extract_amount(i))
+    res = []
 
-    for a,i in amount_ing:
-        search_ingredients(i)
-        pass
-    
+    for ing in ingredients_list:
+        grams, cleaned_ing = extract_amount(ing)
+        nutrients = search_ingredients(grams,cleaned_ing)
+        res.append({
+            "ingredient": cleaned_ing,
+            "amount_g": grams,
+            "nutrients": nutrients
+        })
+        
+    return res
 
 
 if __name__ == '__main__':
     preload(load_data=True)
     from ..core.preload import legacy_data, foundation_data # idfk, reload the variable, will probably cause me more problem down the line
 
-    print(search_ingredients('cauliflower, florets'))
+    print(match_ingredients(['1/2 large cauliflower, cut into florets']))
     print(extract_amount('1/2 large cauliflower, cut into florets'))
