@@ -70,7 +70,6 @@ AMBIGUOUS_MAP = { # To remove ambigiouty
     "butter": "butter salted",
     "rice": "rice white long-grain raw",
     "oats": "rolled oats raw",
-    "oil": "oil vegetable"
 }
 
 # Words that dont affect ingredient identity
@@ -83,6 +82,19 @@ NOISE_WORDS = [
     "about", "around", "approximately",
     "for", "serving", "taste", "cut", "into", "pieces", "bite-sized",
     "and"
+]
+
+IGNORE_FOR_NUTRIENTS = [
+    "salt",
+    "black pepper",
+    "water",
+    "vegetable broth",
+    "herbs",
+    "spices",
+    "garlic powder",
+    "onion powder",
+    "vinegar",
+    'oil'
 ]
 
 def get_result(data,ingredient):
@@ -116,6 +128,9 @@ def extract_main_nutrients(amount,nutrients):
         }
     }
 
+    if amount <= -1:
+        return return_val
+
     if not nutrients:
         return return_val
 
@@ -141,6 +156,7 @@ def extract_main_nutrients(amount,nutrients):
     return return_val
 
 def search_ingredients(amount,ingredient):
+    from ..core.preload import legacy_data, foundation_data
     '''
     for searching ingredients in database, returns info of ingredients with nutrition
     '''
@@ -160,7 +176,7 @@ def search_ingredients(amount,ingredient):
     for result in results:
         filtered.append(result) if result['score'] > 60 else None 
     if not filtered:
-        return extract_main_nutrients({}) 
+        return extract_main_nutrients(-1,{}) 
     
     sorted(filtered, key=lambda x: x["score"], reverse=True)[:10]
 
@@ -183,7 +199,7 @@ def extract_amount(ingredient: str):
 
     ingredients_no_space = re.sub(r"[\s]","",normalize(ingredient)) # No space because sometimes ingredients is 1 400ml smthsmth
     ingredients_words = ingredient.split()
-    grams = 100
+    grams = 1
     word_removed = []
 
     # Change fraction and detect units
@@ -195,7 +211,8 @@ def extract_amount(ingredient: str):
             word_removed.append(word)
 
     for word in word_removed:
-        ingredients_words.remove(word)  
+        if word in ingredients_words:
+            ingredients_words.remove(word)  
 
     # Get amount
     amount_match = re.search(r"(\d+\/\d+|\d+(\.\d+)?)", ingredients_no_space)
@@ -206,7 +223,9 @@ def extract_amount(ingredient: str):
             number = float(num) / float(denom)
         else:
             number = float(fraction)
-        ingredients_words.remove(str(amount_match.group(1)))
+        amount_word = str(amount_match.group(1))
+        if amount_word in ingredients_words:
+            ingredients_words.remove(amount_word)
     else:
         number = 1.0  # default if no amount
     
@@ -219,7 +238,8 @@ def extract_amount(ingredient: str):
             word_removed.append(word)
     
     for word in word_removed:
-        ingredients_words.remove(word)  
+        if word in ingredients_words:
+            ingredients_words.remove(word)  
     return (grams,' '.join(ingredients_words))
 
 
@@ -231,10 +251,25 @@ def match_ingredients(ingredients_list: List[str]):
 
     for ing in ingredients_list:
         grams, cleaned_ing = extract_amount(ing)
-        nutrients = search_ingredients(grams,cleaned_ing)
+
+        if any(fuzz.WRatio(cleaned_ing, ignore) > 80 for ignore in IGNORE_FOR_NUTRIENTS):
+            nutrients = {
+                'Protein': 0,
+                'Carbs': 0,
+                'Fiber': 0,
+                'Energy': 0,
+                'Unit_name': {
+                    'Protein': '',
+                    'Carbs': '',
+                    'Fiber': '',
+                    'Energy': ''
+                }
+            }
+        else:
+            nutrients = search_ingredients(grams, cleaned_ing)
+
         res.append({
-            "ingredient": cleaned_ing,
-            "amount_g": grams,
+            "ingredient": ing,
             "nutrients": nutrients
         })
         
@@ -243,7 +278,18 @@ def match_ingredients(ingredients_list: List[str]):
 
 if __name__ == '__main__':
     preload(load_data=True)
-    from ..core.preload import legacy_data, foundation_data # idfk, reload the variable, will probably cause me more problem down the line
+    import json
 
-    print(match_ingredients(['1 spiced chocolate brownie mix','1 small onion, chopped','1 cup quinoa, rinsed and drained']))
+    print(json.dumps(match_ingredients([
+        "400g chicken breast, diced",
+        "1 cup quinoa, rinsed",
+        "2 cups water or broth",
+        "1 cup bell peppers, diced",
+        "1 cup broccoli florets",
+        "2 tablespoons olive oil",
+        "1 teaspoon salt",
+        "1/2 teaspoon black pepper",
+        "1 teaspoon garlic powder"]), 
+        indent=4
+    ))
     print(extract_amount('1/2 large cauliflower, cut into florets'))
