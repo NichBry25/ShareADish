@@ -254,22 +254,22 @@ def match_ingredients(ingredients_list: List[str]):
 
         if any(fuzz.WRatio(cleaned_ing, ignore) > 80 for ignore in IGNORE_FOR_NUTRIENTS):
             nutrients = {
-                'Protein': 0,
-                'Carbs': 0,
-                'Fiber': 0,
-                'Energy': 0,
-                'Unit_name': {
-                    'Protein': '',
-                    'Carbs': '',
-                    'Fiber': '',
-                    'Energy': ''
+                'protein': 0,
+                'carbs': 0,
+                'fiber': 0,
+                'energy': 0,
+                'unit_name': {
+                    'protein': '',
+                    'carbs': '',
+                    'fiber': '',
+                    'energy': ''
                 }
             }
         else:
             nutrients = search_ingredients(grams, cleaned_ing)
 
         res.append({
-            "ingredient": ing,
+            "name": ing,
             "nutrients": nutrients
         })
         
@@ -280,16 +280,12 @@ if __name__ == '__main__':
     preload(load_data=True)
     import json
 
+
     print(json.dumps(match_ingredients([
-        "400g chicken breast, diced",
-        "1 cup quinoa, rinsed",
-        "2 cups water or broth",
-        "1 cup bell peppers, diced",
-        "1 cup broccoli florets",
-        "2 tablespoons olive oil",
-        "1 teaspoon salt",
-        "1/2 teaspoon black pepper",
-        "1 teaspoon garlic powder"]), 
+            "1 butternut squash, about 850g",
+            "2 tablespoons olive oil",
+            "1/4 teaspoon salt"
+            ]), 
         indent=4
     ))
     print(extract_amount('1/2 large cauliflower, cut into florets'))

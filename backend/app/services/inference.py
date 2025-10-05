@@ -30,8 +30,7 @@ def generate(prompt:str):
     return parse_output(response.output_text)
 
 
-def ai_edit(prompt:str):
-    from ..core.preload import openai_client
+def ai_edit(recipe: Dict, prompt:str):
     '''
     prompt should already be in the form of:
     {
@@ -39,27 +38,89 @@ def ai_edit(prompt:str):
         "user_request":str
     }
     '''
-    response = openai_client.responses.create(
-        instructions=edit_instructions,
-        model="gpt-4o-mini",
-        input=prompt
-    )
+    
+    from ..core.preload import openai_client
 
-    return parse_output(response.output_text)
+    # Clean ingredients, remove nutrients
+    try:
+        ing_list=[]
+        prompt_dict = {
+            'original_recipe':None,
+            'prompt':prompt
+        }
+
+        for ingredient in recipe['ingredients']:
+            ing_list.append(ingredient['name'])
+        recipe['ingredients'] = ing_list
+        prompt_dict['original_recipe'] = recipe
+
+        prompt = json.dumps(prompt_dict, indent=4)
+        response = openai_client.responses.create(
+            instructions=edit_instructions,
+            model="gpt-4o-mini",
+            input=prompt
+        )
+        return parse_output(response.output_text)
+    except Exception as e:
+        return e
+
+    
 
 
 
 if __name__ == "__main__":
     print()
-    print(json.dumps(generate("chicken, quick, healthy, simple, dinner, grains, veggies"),indent=4))
+    # print(json.dumps(generate("chicken, quick, healthy, simple, dinner, grains, veggies"),indent=4))
 
     test_edit='''{
         "original_recipe": {
             "prompt": ["butternut squash", "puree", "simple", "healthy"],
             "ingredients": [
-            "1 butternut squash, about 850g",
-            "2 tablespoons olive oil",
-            "1/4 teaspoon salt"
+                {
+                    "name": "1 butternut squash, about 850g",
+                    "nutrients": {
+                        "Protein": 0,
+                        "Carbs": 0,
+                        "Fiber": 0,
+                        "Energy": 0,
+                        "Unit_name": {
+                            "Protein": "",
+                            "Carbs": "",
+                            "Fiber": "",
+                            "Energy": ""
+                        }
+                    }
+                },
+                {
+                    "name": "2 tablespoons olive oil",
+                    "nutrients": {
+                        "Protein": 0,
+                        "Carbs": 0,
+                        "Fiber": 0,
+                        "Energy": 0,
+                        "Unit_name": {
+                            "Protein": "",
+                            "Carbs": "",
+                            "Fiber": "",
+                            "Energy": ""
+                        }
+                    }
+                },
+                {
+                    "name": "1/4 teaspoon salt",
+                    "nutrients": {
+                        "Protein": 0,
+                        "Carbs": 0,
+                        "Fiber": 0,
+                        "Energy": 0,
+                        "Unit_name": {
+                            "Protein": "",
+                            "Carbs": "",
+                            "Fiber": "",
+                            "Energy": ""
+                        }
+                    }
+                }
             ],
             "method": [
             "Preheat the oven to 200°C.",
