@@ -7,6 +7,7 @@ client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
 shareadish = client.get_database("shareadish")
 
 user_db = shareadish.get_collection("users")
+recipe_db = shareadish.get_collection("recipes")
 
 def print_url():
     print(f"MONGO_URL: {MONGO_URL}")
