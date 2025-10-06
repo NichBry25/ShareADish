@@ -117,9 +117,10 @@ def get_result(data,ingredient):
 def extract_main_nutrients(amount,nutrients):
     return_val = {
         'protein': 0,
-        'carbs': 0,
+        'carbohydrates': 0,
         'fiber': 0,
-        'energy': 0,
+        'fat':0,
+        'calories': 0,
     }
 
     if amount <= -1:
@@ -130,16 +131,16 @@ def extract_main_nutrients(amount,nutrients):
 
     if "Protein" in nutrients:
         return_val['protein'] = round((nutrients["Protein"][0]/100) * amount,3)
-
+    if "Total lipid (fat)" in nutrients:
+        return_val['fat'] = round((nutrients["Total lipid (fat)"][0]/100) * amount,3)
     if "Carbohydrate, by difference" in nutrients:
         return_val['carbs'] = round((nutrients["Carbohydrate, by difference"][0]/100) * amount,3)
     if "Fiber, total dietary" in nutrients:
         return_val['fiber'] = round((nutrients["Fiber, total dietary"][0]/100) * amount,3)
-
     if "Energy (Atwater General Factors)" in nutrients:
-        return_val['energy'] = round((nutrients["Energy (Atwater General Factors)"][0]/100) * amount,3)
+        return_val['calories'] = round((nutrients["Energy (Atwater General Factors)"][0]/100) * amount,3)
     elif "Energy (Atwater Specific Factors)" in nutrients:
-        return_val['energy'] = round((nutrients["Energy (Atwater Specific Factors)"][0]/100) * amount,3)
+        return_val['calories'] = round((nutrients["Energy (Atwater Specific Factors)"][0]/100) * amount,3)
 
     return return_val
 
@@ -238,9 +239,10 @@ def match_ingredients(ingredients_list: List[str]):
     '''
     res_nutrients = {
         'protein':0,
-        'carbs': 0,
+        'carbohydrates': 0,
         'fiber': 0,
-        'energy': 0
+        'fat':0,
+        'calories': 0
     }
 
     for ing in ingredients_list:
@@ -249,18 +251,27 @@ def match_ingredients(ingredients_list: List[str]):
         if any(fuzz.WRatio(cleaned_ing, ignore) > 80 for ignore in IGNORE_FOR_NUTRIENTS):
             nutrients = {
                 'protein': 0,
-                'carbs': 0,
+                'carbohydrates': 0,
                 'fiber': 0,
-                'energy': 0,
+                'fat':0,
+                'calories': 0,
             }
         else:
             nutrients = search_ingredients(grams, cleaned_ing)
 
         res_nutrients['protein']+=nutrients['protein']
-        res_nutrients['carbs']+=nutrients['carbs']
+        res_nutrients['carbohydrates']+=nutrients['carbohydrates']
         res_nutrients['fiber']+=nutrients['fiber']
-        res_nutrients['energy']+=nutrients['energy']
+        res_nutrients['fat']+=nutrients['fat']
+        res_nutrients['calories']+=nutrients['calories']
         
+    # Convert 
+    res_nutrients['protein']=f"{res_nutrients['protein']:.3f}g"
+    res_nutrients['carbohydrates']=f"{res_nutrients['carbohydrates']:.3f}g"
+    res_nutrients['fiber']=f"{res_nutrients['fiber']:.3f}g"
+    res_nutrients['calories']=f"{res_nutrients['calories']:.3f}g"
+    res_nutrients['fat']=f"{res_nutrients['fat']:.3f}g"
+
     return res_nutrients
 
 

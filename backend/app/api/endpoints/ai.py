@@ -16,7 +16,7 @@ async def generate_ai(prompt: GenerateRequest):
 
     return(RecipeCreationBase(prompt=recipe['prompt'], 
                               ingredients=recipe['ingredients'],
-                              method=recipe['method'],
+                              steps=recipe['method'],
                               nutrients=recipe['nutrients']))
 
 @router.post('/edit', response_model=RecipeEditResponse,
@@ -30,7 +30,8 @@ async def edit(prompt: RecipeEditRequest):
 
     return(RecipeEditResponse(title=prompt.title,prompt=recipe['prompt'],
                               ingredients=recipe['ingredients'],
-                              method=recipe['method']))
+                              nutrients=recipe['nutrients'],
+                              steps=recipe['method']))
 
 
 

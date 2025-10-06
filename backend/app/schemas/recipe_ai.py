@@ -4,10 +4,11 @@ from typing import List
 
 
 class Nutrients(BaseModel):
-    protein: float
-    carbs: float
-    fiber: float
-    energy: float
+    protein: str
+    carbohydrates: str
+    fiber: str
+    fat: str
+    calories: str
 
 
 class RecipeCreationBase(BaseModel):
@@ -17,7 +18,7 @@ class RecipeCreationBase(BaseModel):
     prompt:List[str]
     ingredients:List[str]
     nutrients:Nutrients
-    method:List[str]
+    steps:List[str]
 
 class RecipeEditResponse(RecipeCreationBase):
     title:str
