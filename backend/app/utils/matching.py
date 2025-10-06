@@ -60,7 +60,7 @@ AMBIGUOUS_MAP = { # To remove ambigiouty
     "chicken": "chicken breast boneless skinless raw",
     "beef": "beef ground 75% lean raw / 25% fat raw",
     "pork": "pork ground raw",
-    "mushroom": "mushrooms white raw",
+    "mushroom": "mushrooms white",
     "onion": "onions raw",                              
     "potato": "potato russet raw",                      
     "pepper": "spices pepper black",
@@ -68,7 +68,7 @@ AMBIGUOUS_MAP = { # To remove ambigiouty
     "milk": "milk whole",
     "cheese": "cheddar cheese",
     "butter": "butter salted",
-    "rice": "rice white long-grain raw",
+    "rice": "white rice",
     "oats": "rolled oats raw",
 }
 
@@ -97,22 +97,81 @@ IGNORE_FOR_NUTRIENTS = [
     'oil'
 ]
 
-def get_result(data,ingredient):
+
+def get_candidates(ingredient, choices):
+    '''
+    To be used in get result to filter the choices in the dataset
+    '''
+    if 'rice' in ingredient:
+        candidates = [c for c in choices if 'rice' in c and 'cooked' not in c]
+    elif 'mushroom' in ingredient:
+        candidates = [c for c in choices if 'mushroom' in c]
+    elif 'chicken' in ingredient:
+        candidates = [c for c in choices if 'chicken breast' in c or 'chicken raw' in c or 'chicken meat only' in c]
+    elif 'oil' in ingredient:
+        candidates = [c for c in choices if 'oil' in c and 'olive' in c]
+    elif 'pepper' in ingredient:
+        candidates = [c for c in choices if 'pepper black' in c or 'pepper' in c]
+    elif 'salt' in ingredient:
+        candidates = [c for c in choices if 'salt' in c]
+    else:
+        candidates = choices      
+    return candidates
+
+def get_result(data, ingredient, legacy=False):
+    '''
+    Searches the dataset for the ingredient with bias
+    '''
+    ingredient_lower = ingredient.lower().strip()
     choices = [entry['description'] for entry in data]
-    
+    desc_to_data = {entry['description']: entry for entry in data}
+    candidates = choices      
+
+    # Use ingredient-specific keyword logic, only if legacy since foundation only have base ingredients 
+    if(legacy):
+        if "broth" in ingredient or "stock" in ingredient:
+            candidates = [c for c in choices if any(k in c.lower() for k in ["broth","stock", "soup"])]
+            # skip dumb stuff
+            candidates = [c for c in candidates
+                if not any(bad in c.lower() for bad in [
+                    "cream", "chunky", "gumbo", "gravy", "no broth", "condensed",
+                    "mix", "dry", "soup", "powder", "seasoning","meat only"
+                ])]
+        candidates = get_candidates(ingredient, choices)
+    else:
+        candidates = get_candidates(ingredient, choices)
+  
+
+    # fuzzy match with context bias
     matches = process.extract(
-        ingredient,
-        choices,
-        scorer=fuzz.token_sort_ratio,
-        limit=20
+        ingredient_lower,
+        candidates,
+        scorer=fuzz.WRatio,
+        limit=10
     )
+
     results = []
-    for _, score, idx in matches:
+    for desc, score, _ in matches:
         results.append({
-            "match": data[idx],
+            "match": desc_to_data[desc],
             "score": score
         })
+
+    # Strongly prefer raw or uncooked forms unless explicitly cooked
+    def bias_score(result):
+        desc = result['match']['description'].lower()
+        score = result['score']
+        if 'raw' in desc:
+            score += 10
+        if 'restaurant' in desc or 'prepared' in desc:
+            score -= 15
+        if 'cooked' in desc and 'raw' not in desc:
+            score -= 5
+        return score
+
+    results.sort(key=bias_score, reverse=True)
     return results
+
     
 def extract_main_nutrients(amount,nutrients):
     return_val = {
@@ -145,21 +204,24 @@ def extract_main_nutrients(amount,nutrients):
     return return_val
 
 def search_ingredients(amount,ingredient):
-    from ..core.preload import legacy_data, foundation_data
     '''
     for searching ingredients in database, returns info of ingredients with nutrition
     '''
+    from ..core.preload import legacy_data, foundation_data
     ingredient = normalize(ingredient)
     for amb_word, _ in AMBIGUOUS_MAP.items():
-        if fuzz.WRatio(ingredient,amb_word) > 70:
+        if fuzz.WRatio(ingredient,amb_word) > 90:
             ingredient = AMBIGUOUS_MAP[amb_word]
 
     results = []
-    results.extend(get_result(foundation_data,ingredient))
+    if('soup' in ingredient or 'broth' in ingredient):
+        results.extend(get_result(legacy_data, ingredient, legacy=True))
+    else:
+        results.extend(get_result(foundation_data,ingredient))
 
-    if not results or results[0]["score"] < 85:
-        # Will prioritize getting results from foundational data first (most of it is raw ingredients) before legacy data (everything else)
-        results.extend(get_result(legacy_data, ingredient))
+        if not results or results[0]["score"] < 85:
+            # Will prioritize getting results from foundational data first (most of it is raw ingredients) before legacy data (everything else)
+            results.extend(get_result(legacy_data, ingredient, legacy=True))
     
     filtered = []
     for result in results:
@@ -168,7 +230,8 @@ def search_ingredients(amount,ingredient):
         return extract_main_nutrients(-1,{}) 
     
     sorted(filtered, key=lambda x: x["score"], reverse=True)[:10]
-
+    if filtered:
+        print(filtered[0]['match']['description'],filtered[0]['score'])
     nutrients = {
         n["nutrient"]["name"]: (n["amount"], n["nutrient"]["unitName"])
         for n in filtered[0]['match'].get("foodNutrients", [])
@@ -191,7 +254,7 @@ def extract_amount(ingredient: str):
     grams = 1
     word_removed = []
 
-    # Change fraction and detect units
+    # Change fraction
     for i,word in enumerate(ingredients_words):
         if word in FRACTION_MAP.keys():
             ingredients_words[i] = FRACTION_MAP[word]
@@ -212,14 +275,14 @@ def extract_amount(ingredient: str):
         amount_word = str(amount_match.group(1))
         if amount_word in ingredients_words:
             ingredients_words.remove(amount_word)
-    
-    if number==None: # Check if an ammount is detected
+        grams *= number
+    else:
         for i,word in enumerate(ingredients_words):
             if word in UNIT_MAP.keys(): # If not, find an appropriate unit in the string and map it to the grams
                 grams = UNIT_MAP[word]
                 word_removed.append(word)
-    else:
-        grams *= number
+
+        
 
     # Remove noise
     word_removed = []
@@ -230,7 +293,8 @@ def extract_amount(ingredient: str):
     for word in word_removed:
         if word in ingredients_words:
             ingredients_words.remove(word)  
-            
+
+    print(grams,' '.join(ingredients_words))
     return (grams,' '.join(ingredients_words))
 
 
@@ -270,8 +334,8 @@ def match_ingredients(ingredients_list: List[str]):
     res_nutrients['protein']=f"{res_nutrients['protein']:.3f}g"
     res_nutrients['carbohydrates']=f"{res_nutrients['carbohydrates']:.3f}g"
     res_nutrients['fiber']=f"{res_nutrients['fiber']:.3f}g"
-    res_nutrients['calories']=f"{res_nutrients['calories']:.3f}g"
-    res_nutrients['fat']=f"{res_nutrients['fat']:.3f}kcal"
+    res_nutrients['calories']=f"{res_nutrients['calories']:.3f}kcal"
+    res_nutrients['fat']=f"{res_nutrients['fat']:.3f}g"
 
     return res_nutrients
 
@@ -288,7 +352,8 @@ if __name__ == '__main__':
     "1 tablespoon olive oil",
     "600ml chicken broth",
     "1/2 teaspoon salt",
-    "1/4 teaspoon black pepper"
+    "1/4 teaspoon black pepper",
+    "200g pork belly"
   ]), 
         indent=4
     ))
