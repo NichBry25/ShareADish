@@ -1,0 +1,13 @@
+<svg width="640" height="480" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Recipe placeholder">
+  <defs>
+    <linearGradient id="placeholderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f4f4f5" />
+      <stop offset="100%" stop-color="#e4e4e7" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="480" fill="url(#placeholderGradient)" rx="40" />
+  <g fill="none" stroke="#d4d4d8" stroke-width="8" stroke-linecap="round">
+    <path d="M160 360c32-64 96-64 128-32 32 32 96 32 128-32s96-32 128 32" />
+    <circle cx="240" cy="200" r="56" />
+  </g>
+</svg>
