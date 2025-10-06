@@ -116,16 +116,10 @@ def get_result(data,ingredient):
     
 def extract_main_nutrients(amount,nutrients):
     return_val = {
-        'Protein': 0,
-        'Carbs': 0,
-        'Fiber': 0,
-        'Energy': 0,
-        'Unit_name': {
-            'Protein': '',
-            'Carbs': '',
-            'Fiber': '',
-            'Energy': ''
-        }
+        'protein': 0,
+        'carbs': 0,
+        'fiber': 0,
+        'energy': 0,
     }
 
     if amount <= -1:
@@ -135,23 +129,17 @@ def extract_main_nutrients(amount,nutrients):
         return return_val
 
     if "Protein" in nutrients:
-        return_val['Protein'] = round((nutrients["Protein"][0]/100) * amount,3)
-        return_val['Unit_name']['Protein'] = nutrients["Protein"][1]
+        return_val['protein'] = round((nutrients["Protein"][0]/100) * amount,3)
 
     if "Carbohydrate, by difference" in nutrients:
-        return_val['Carbs'] = round((nutrients["Carbohydrate, by difference"][0]/100) * amount,3)
-        return_val['Unit_name']['Carbs'] = nutrients["Carbohydrate, by difference"][1]
-
+        return_val['carbs'] = round((nutrients["Carbohydrate, by difference"][0]/100) * amount,3)
     if "Fiber, total dietary" in nutrients:
-        return_val['Fiber'] = round((nutrients["Fiber, total dietary"][0]/100) * amount,3)
-        return_val['Unit_name']['Fiber'] = nutrients["Fiber, total dietary"][1]
+        return_val['fiber'] = round((nutrients["Fiber, total dietary"][0]/100) * amount,3)
 
     if "Energy (Atwater General Factors)" in nutrients:
-        return_val['Energy'] = round((nutrients["Energy (Atwater General Factors)"][0]/100) * amount,3)
-        return_val['Unit_name']['Energy'] = nutrients["Energy (Atwater General Factors)"][1]
+        return_val['energy'] = round((nutrients["Energy (Atwater General Factors)"][0]/100) * amount,3)
     elif "Energy (Atwater Specific Factors)" in nutrients:
-        return_val['Energy'] = round((nutrients["Energy (Atwater Specific Factors)"][0]/100) * amount,3)
-        return_val['Unit_name']['Energy'] = nutrients["Energy (Atwater Specific Factors)"][1]
+        return_val['energy'] = round((nutrients["Energy (Atwater Specific Factors)"][0]/100) * amount,3)
 
     return return_val
 
@@ -240,6 +228,7 @@ def extract_amount(ingredient: str):
     for word in word_removed:
         if word in ingredients_words:
             ingredients_words.remove(word)  
+    print((grams,' '.join(ingredients_words)))
     return (grams,' '.join(ingredients_words))
 
 
@@ -247,7 +236,12 @@ def match_ingredients(ingredients_list: List[str]):
     '''
     Parse amounts + match each ingredient with nutrition info
     '''
-    res = []
+    res_nutrients = {
+        'protein':0,
+        'carbs': 0,
+        'fiber': 0,
+        'energy': 0
+    }
 
     for ing in ingredients_list:
         grams, cleaned_ing = extract_amount(ing)
@@ -258,22 +252,16 @@ def match_ingredients(ingredients_list: List[str]):
                 'carbs': 0,
                 'fiber': 0,
                 'energy': 0,
-                'unit_name': {
-                    'protein': '',
-                    'carbs': '',
-                    'fiber': '',
-                    'energy': ''
-                }
             }
         else:
             nutrients = search_ingredients(grams, cleaned_ing)
 
-        res.append({
-            "name": ing,
-            "nutrients": nutrients
-        })
+        res_nutrients['protein']+=nutrients['protein']
+        res_nutrients['carbs']+=nutrients['carbs']
+        res_nutrients['fiber']+=nutrients['fiber']
+        res_nutrients['energy']+=nutrients['energy']
         
-    return res
+    return res_nutrients
 
 
 if __name__ == '__main__':
@@ -282,10 +270,14 @@ if __name__ == '__main__':
 
 
     print(json.dumps(match_ingredients([
-            "1 butternut squash, about 850g",
-            "2 tablespoons olive oil",
-            "1/4 teaspoon salt"
-            ]), 
+    "400g chicken breast, diced, 2 pieces",
+    "200g rice, uncooked, 1 cup",
+    "250g mushrooms, sliced, 2 cups",
+    "1 tablespoon olive oil",
+    "600ml chicken broth",
+    "1/2 teaspoon salt",
+    "1/4 teaspoon black pepper"
+  ]), 
         indent=4
     ))
     print(extract_amount('1/2 large cauliflower, cut into florets'))

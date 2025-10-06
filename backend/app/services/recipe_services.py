@@ -1,6 +1,6 @@
 from ..schemas import RecipeCreate
 from fastapi import HTTPException
-from database import recipe_db
+from ..database import recipe_db
 
 def create_recipe(recipe_data: RecipeCreate):
     recipe_doc = recipe_data.model_dump()

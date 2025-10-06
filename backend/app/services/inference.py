@@ -13,8 +13,9 @@ def parse_output(ai_output: str) -> Dict[str, Any]:
         output = json.loads(str(ai_output))
         if('error' in output.keys()):
             return output
+        print(json.dumps(output,indent=4))
         ingredients_nutrients=match_ingredients(output['ingredients'])
-        output['ingredients']=ingredients_nutrients
+        output['nutrients']=ingredients_nutrients
         return output
     except Exception as e:
         return {'error': str(e)}
@@ -70,7 +71,7 @@ def ai_edit(recipe: Dict, prompt:str):
 
 if __name__ == "__main__":
     print()
-    # print(json.dumps(generate("chicken, quick, healthy, simple, dinner, grains, veggies"),indent=4))
+    print(json.dumps(generate(prompt="chicken, quick, healthy, simple, dinner, grains, veggies"),indent=4))
 
     test_edit='''{
         "original_recipe": {
@@ -136,4 +137,4 @@ if __name__ == "__main__":
     }'''
     print()
     print()
-    print(json.dumps(ai_edit(test_edit),indent=4))
+    # print(json.dumps(ai_edit(test_edit),indent=4))
