@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect } from "react";
 import { MouseEvent, useMemo, useState } from "react";
 import BackButton from "@/components/interactables/BackButton";
 import { HeaderLayout } from "@/components/layouts/HeaderLayout";
+import CreateRecipeManualLoading from "@/components/layouts/loadings/CreateRecipeManualLoading";
 
 type ListItem = {
   id: string;
@@ -21,6 +23,7 @@ const instructionsCopy =
 const makeId = () => Math.random().toString(36).slice(2, 10);
 
 export default function CreateRecipeManual() {
+  const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]); 
@@ -34,6 +37,11 @@ export default function CreateRecipeManual() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const tagOptions = Array.from({ length: 10 }, (_, i) => `Tag ${i + 1}`);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filledIngredients = useMemo(
     () => ingredients.map((item) => item.value.trim()).filter(Boolean),
@@ -150,6 +158,10 @@ export default function CreateRecipeManual() {
 
     setSaveFeedback("All recipe details look great. You're ready to publish!");
   };
+
+  if (isLoading){
+    return <CreateRecipeManualLoading />
+  }
 
   return (
     <main className="min-h-screen bg-zinc-50 pb-24">
