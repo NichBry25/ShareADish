@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 import os 
 
-MONGO_URL = os.getenv("MONGO_URL")
+MONGO_URL = os.getenv("MONGODB_URL")
 
 client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
 shareadish = client.get_database("shareadish")
