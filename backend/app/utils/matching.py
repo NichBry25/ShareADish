@@ -134,7 +134,7 @@ def extract_main_nutrients(amount,nutrients):
     if "Total lipid (fat)" in nutrients:
         return_val['fat'] = round((nutrients["Total lipid (fat)"][0]/100) * amount,3)
     if "Carbohydrate, by difference" in nutrients:
-        return_val['carbs'] = round((nutrients["Carbohydrate, by difference"][0]/100) * amount,3)
+        return_val['carbohydrates'] = round((nutrients["Carbohydrate, by difference"][0]/100) * amount,3)
     if "Fiber, total dietary" in nutrients:
         return_val['fiber'] = round((nutrients["Fiber, total dietary"][0]/100) * amount,3)
     if "Energy (Atwater General Factors)" in nutrients:
@@ -195,9 +195,6 @@ def extract_amount(ingredient: str):
     for i,word in enumerate(ingredients_words):
         if word in FRACTION_MAP.keys():
             ingredients_words[i] = FRACTION_MAP[word]
-        if word in UNIT_MAP.keys():
-            grams = UNIT_MAP[word]
-            word_removed.append(word)
 
     for word in word_removed:
         if word in ingredients_words:
@@ -215,10 +212,14 @@ def extract_amount(ingredient: str):
         amount_word = str(amount_match.group(1))
         if amount_word in ingredients_words:
             ingredients_words.remove(amount_word)
-    else:
-        number = 1.0  # default if no amount
     
-    grams *= number
+    if number==None: # Check if an ammount is detected
+        for i,word in enumerate(ingredients_words):
+            if word in UNIT_MAP.keys(): # If not, find an appropriate unit in the string and map it to the grams
+                grams = UNIT_MAP[word]
+                word_removed.append(word)
+    else:
+        grams *= number
 
     # Remove noise
     word_removed = []
@@ -229,7 +230,7 @@ def extract_amount(ingredient: str):
     for word in word_removed:
         if word in ingredients_words:
             ingredients_words.remove(word)  
-    print((grams,' '.join(ingredients_words)))
+            
     return (grams,' '.join(ingredients_words))
 
 
@@ -270,7 +271,7 @@ def match_ingredients(ingredients_list: List[str]):
     res_nutrients['carbohydrates']=f"{res_nutrients['carbohydrates']:.3f}g"
     res_nutrients['fiber']=f"{res_nutrients['fiber']:.3f}g"
     res_nutrients['calories']=f"{res_nutrients['calories']:.3f}g"
-    res_nutrients['fat']=f"{res_nutrients['fat']:.3f}g"
+    res_nutrients['fat']=f"{res_nutrients['fat']:.3f}kcal"
 
     return res_nutrients
 
