@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from .core import preload
 from .database import close_session
 from .api import routers
+from os import getenv
 
 try:
     preload()
@@ -15,6 +16,7 @@ except FileNotFoundError:
 async def lifespan(app: FastAPI):
     # startup code
     print("App Startup!")
+    print(getenv('MONGODB_URL'))
     yield
     # shutdown code
     close_session()
@@ -23,10 +25,28 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(debug=True, lifespan=lifespan)
 
-origins = [
-    "http://localhost:3000",
-    # add the local ip for frontend as well
-]
+# origins = [
+#     "http://localhost:3000",
+
+#     CORSMiddleware
+#     # add the local ip for frontend as well
+# ]
+
+
+# app.add_middleware(
+#     origins
+# )
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or specify ["http://localhost:3000"] etc.
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 
 for router in routers:
     app.include_router(router)

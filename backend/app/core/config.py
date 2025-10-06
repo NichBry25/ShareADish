@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str
     CLOUDINARY_API_KEY: str
 
+    MONGODB_URL:str
+
     # add stuff for mongo later
 
     class Config:
