@@ -1,14 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List
+from .nutrient import Nutrients
 
-
-
-class Nutrients(BaseModel):
-    protein: str
-    carbohydrates: str
-    fiber: str
-    fat: str
-    calories: str
 
 
 class RecipeCreationBase(BaseModel):
