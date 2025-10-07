@@ -1,9 +1,10 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { HeaderLayout } from "@/components/layouts/HeaderLayout";
 import BackButton from "@/components/interactables/BackButton";
 import api from "@/lib/axios"
+import CreateRecipeAILoading from "@/components/layouts/loadings/CreateRecipeAILoading";
 
 type GeneratedRecipe = {
   ingredients: string[];
@@ -21,6 +22,7 @@ const initialInstructions =
   "Describe what you are craving, dietary preferences, cooking method, or any ingredients you'd like to feature.";
 
 export default function CreateRecipeAI() {
+  const [isLoading, setIsLoading] = useState(true);
   const [prompt, setPrompt] = useState("");
   const [generatedRecipe, setGeneratedRecipe] = useState<GeneratedRecipe | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +33,11 @@ export default function CreateRecipeAI() {
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
 
   const tagOptions = Array.from({ length: 10}, (_, i) => `Tag ${i + 1}`);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, [])
 
   const hasGeneratedRecipe = useMemo(() => {
     if (!generatedRecipe) return false;
@@ -148,6 +155,10 @@ export default function CreateRecipeAI() {
 
     setSaveFeedback("All recipe details are ready. You're good to go!");
   };
+
+  if (isLoading) {
+    return <CreateRecipeAILoading />;
+  }
 
   return (
     <main className="min-h-screen bg-zinc-50 pb-24">
