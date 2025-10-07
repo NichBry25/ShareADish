@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function AccountButton() {
   return (
-    <Link href='/account-info'>
+    <Link href='/your-account'>
         <button
         type="button"
         className="flex items-center gap-2 rounded-full border border-transparent bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:border-zinc-200 hover:bg-zinc-100"

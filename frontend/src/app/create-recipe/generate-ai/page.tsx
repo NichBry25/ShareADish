@@ -54,27 +54,10 @@ export default function CreateRecipeAI() {
     setIsSubmitting(true);
     setErrorMessage(null);
 
+    // TODO: Create the response for calling the AI.
     try {
-    //   const response = await fetch("/api/recipes/generate", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ prompt: prompt.trim() }),
-    //   });
-
-    //   if (!response.ok) {
-    //     throw new Error("Failed to generate recipe");
-    //   }
-
-    //   const data = await response.json();
-    //   const ingredients = Array.isArray(data?.ingredients) ? data.ingredients : [];
-    //   const steps = Array.isArray(data?.steps) ? data.steps : [];
-
-    //   if (!ingredients.length && !steps.length) {
-    //     throw new Error("Invalid recipe response");
-    //   }
-
         // Mocked response for demonstration purposes
-        await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate network delay
+        await new Promise((resolve) => setTimeout(resolve, 1500));
         const ingredients = [
           "200g spaghetti",
           "1 cup mushrooms, sliced",
