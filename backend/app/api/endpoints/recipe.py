@@ -10,6 +10,6 @@ def return_all_recipe(limit: int = 10):
     pass
 
 @router.post("/")
-def post_recipe(recipe_post: dict): # TODO - Should checking for JWT Token be here or frontend?
-    new_recipe_id = create_recipe(recipe_post)
+def post_recipe(request: dict): # TODO - Should checking for JWT Token be here or frontend?
+    new_recipe_id = create_recipe(request)
     return {"id": new_recipe_id}

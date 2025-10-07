@@ -9,9 +9,12 @@ router = APIRouter(prefix="/ai",
 @router.post('/generate', response_model=RecipeCreationBase,
                 responses={400: {"model": ErrorResponse}}
             )
-async def generate_ai(prompt: GenerateRequest):
-    recipe = generate(prompt.prompt)
+async def generate_ai(request: GenerateRequest):
+    recipe = generate(request.prompt)
+    print("AI Recipe Output:", recipe)
     if 'error' in recipe.keys():
+        if recipe['error'] == 'rate limited':
+            raise HTTPException(status_code=429, detail="Rate Limited")
         raise HTTPException(status_code=400, detail=recipe['error'])
 
     return(RecipeCreationBase(prompt=recipe['prompt'], 

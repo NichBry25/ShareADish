@@ -70,6 +70,7 @@ AMBIGUOUS_MAP = { # To remove ambigiouty
     "butter": "butter salted",
     "rice": "white rice",
     "oats": "rolled oats raw",
+    "pasta":"barley"
 }
 
 # Words that dont affect ingredient identity
@@ -81,7 +82,7 @@ NOISE_WORDS = [
     "drained", "rinsed", "beaten", "divided",
     "about", "around", "approximately",
     "for", "serving", "taste", "cut", "into", "pieces", "bite-sized",
-    "and"
+    "and", "to", "taste"
 ]
 
 IGNORE_FOR_NUTRIENTS = [
@@ -102,8 +103,20 @@ def get_candidates(ingredient, choices):
     '''
     To be used in get result to filter the choices in the dataset
     '''
+    cleaned_words = []
+    for word in ingredient.split():
+        if word.lower() not in NOISE_WORDS:
+            cleaned_words.append(word)
+
+    ingredient = ' '.join(cleaned_words)
+
+    if 'sauce' not in ingredient:
+        choices = [c for c in choices if 'sauce' not in c]
+        
     if 'rice' in ingredient:
-        candidates = [c for c in choices if 'rice' in c and 'cooked' not in c]
+        candidates = [c for c in choices if 'rice' in c]
+    elif 'pasta' in ingredient:
+        candidates = [c for c in choices if 'pasta' in c]
     elif 'mushroom' in ingredient:
         candidates = [c for c in choices if 'mushroom' in c]
     elif 'chicken' in ingredient:
@@ -164,11 +177,10 @@ def get_result(data, ingredient, legacy=False):
         if 'raw' in desc:
             score += 10
         if 'restaurant' in desc or 'prepared' in desc:
-            score -= 15
-        if 'cooked' in desc and 'raw' not in desc:
-            score -= 5
+            score -= 10
         return score
 
+    
     results.sort(key=bias_score, reverse=True)
     return results
 
@@ -178,7 +190,7 @@ def extract_main_nutrients(amount,nutrients):
         'protein': 0,
         'carbohydrates': 0,
         'fiber': 0,
-        'fat':0,
+        'fats':0,
         'calories': 0,
     }
 
@@ -189,17 +201,17 @@ def extract_main_nutrients(amount,nutrients):
         return return_val
 
     if "Protein" in nutrients:
-        return_val['protein'] = round((nutrients["Protein"][0]/100) * amount,3)
+        return_val['protein'] = round((nutrients["Protein"]/100) * amount,3)
     if "Total lipid (fat)" in nutrients:
-        return_val['fat'] = round((nutrients["Total lipid (fat)"][0]/100) * amount,3)
+        return_val['fats'] = round((nutrients["Total lipid (fat)"]/100) * amount,3)
     if "Carbohydrate, by difference" in nutrients:
-        return_val['carbohydrates'] = round((nutrients["Carbohydrate, by difference"][0]/100) * amount,3)
+        return_val['carbohydrates'] = round((nutrients["Carbohydrate, by difference"]/100) * amount,3)
     if "Fiber, total dietary" in nutrients:
-        return_val['fiber'] = round((nutrients["Fiber, total dietary"][0]/100) * amount,3)
+        return_val['fiber'] = round((nutrients["Fiber, total dietary"]/100) * amount,3)
     if "Energy (Atwater General Factors)" in nutrients:
-        return_val['calories'] = round((nutrients["Energy (Atwater General Factors)"][0]/100) * amount,3)
+        return_val['calories'] = round((nutrients["Energy (Atwater General Factors)"]/100) * amount,3)
     elif "Energy (Atwater Specific Factors)" in nutrients:
-        return_val['calories'] = round((nutrients["Energy (Atwater Specific Factors)"][0]/100) * amount,3)
+        return_val['calories'] = round((nutrients["Energy (Atwater Specific Factors)"]/100) * amount,3)
 
     return return_val
 
@@ -210,7 +222,7 @@ def search_ingredients(amount,ingredient):
     from ..core.preload import legacy_data, foundation_data
     ingredient = normalize(ingredient)
     for amb_word, _ in AMBIGUOUS_MAP.items():
-        if fuzz.WRatio(ingredient,amb_word) > 90:
+        if fuzz.WRatio(ingredient,amb_word) >= 90:
             ingredient = AMBIGUOUS_MAP[amb_word]
 
     results = []
@@ -230,10 +242,9 @@ def search_ingredients(amount,ingredient):
         return extract_main_nutrients(-1,{}) 
     
     sorted(filtered, key=lambda x: x["score"], reverse=True)[:10]
-    if filtered:
-        print(filtered[0]['match']['description'],filtered[0]['score'])
+
     nutrients = {
-        n["nutrient"]["name"]: (n["amount"], n["nutrient"]["unitName"])
+        n["nutrient"]["name"]: n.get("amount",0)
         for n in filtered[0]['match'].get("foodNutrients", [])
     }
 
@@ -294,7 +305,6 @@ def extract_amount(ingredient: str):
         if word in ingredients_words:
             ingredients_words.remove(word)  
 
-    print(grams,' '.join(ingredients_words))
     return (grams,' '.join(ingredients_words))
 
 
@@ -306,7 +316,7 @@ def match_ingredients(ingredients_list: List[str]):
         'protein':0,
         'carbohydrates': 0,
         'fiber': 0,
-        'fat':0,
+        'fats':0,
         'calories': 0
     }
 
@@ -318,7 +328,7 @@ def match_ingredients(ingredients_list: List[str]):
                 'protein': 0,
                 'carbohydrates': 0,
                 'fiber': 0,
-                'fat':0,
+                'fats':0,
                 'calories': 0,
             }
         else:
@@ -327,7 +337,7 @@ def match_ingredients(ingredients_list: List[str]):
         res_nutrients['protein']+=nutrients['protein']
         res_nutrients['carbohydrates']+=nutrients['carbohydrates']
         res_nutrients['fiber']+=nutrients['fiber']
-        res_nutrients['fat']+=nutrients['fat']
+        res_nutrients['fats']+=nutrients['fats']
         res_nutrients['calories']+=nutrients['calories']
         
     # Convert 
@@ -335,7 +345,7 @@ def match_ingredients(ingredients_list: List[str]):
     res_nutrients['carbohydrates']=f"{res_nutrients['carbohydrates']:.3f}g"
     res_nutrients['fiber']=f"{res_nutrients['fiber']:.3f}g"
     res_nutrients['calories']=f"{res_nutrients['calories']:.3f}kcal"
-    res_nutrients['fat']=f"{res_nutrients['fat']:.3f}g"
+    res_nutrients['fats']=f"{res_nutrients['fats']:.3f}g"
 
     return res_nutrients
 
@@ -345,16 +355,8 @@ if __name__ == '__main__':
     import json
 
 
-    print(json.dumps(match_ingredients([
-    "400g chicken breast, diced, 2 pieces",
-    "200g rice, uncooked, 1 cup",
-    "250g mushrooms, sliced, 2 cups",
-    "1 tablespoon olive oil",
-    "600ml chicken broth",
-    "1/2 teaspoon salt",
-    "1/4 teaspoon black pepper",
-    "200g pork belly"
-  ]), 
+    print(json.dumps(match_ingredients(
+        ['300g pasta, cooked, 2 cups', '200g mushrooms, sliced, 2 cups', '150g spinach, fresh, 3 cups', '1 cup heavy cream', '2 tablespoons olive oil', '2 cloves garlic, minced, 2 pieces', 'Salt, to taste', 'Pepper, to taste']), 
         indent=4
     ))
     print(extract_amount('1/2 large cauliflower, cut into florets'))

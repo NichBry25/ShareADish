@@ -3,6 +3,7 @@ from ..core.instructions import instructions, edit_instructions
 from ..utils.matching import match_ingredients
 import json
 from typing import Dict, Any
+from openai import RateLimitError
 
 
 preload(load_data=True)
@@ -10,10 +11,9 @@ preload(load_data=True)
 
 def parse_output(ai_output: str) -> Dict[str, Any]:
     try:
-        output = json.loads(str(ai_output))
+        output = json.loads(ai_output)
         if('error' in output.keys()):
             return output
-        print(json.dumps(output,indent=4))
         ingredients_nutrients=match_ingredients(output['ingredients'])
         output['nutrients']=ingredients_nutrients
         return output
@@ -22,11 +22,14 @@ def parse_output(ai_output: str) -> Dict[str, Any]:
 
 def generate(prompt:str):
     from ..core.preload import openai_client
-    response = openai_client.responses.create(
-        instructions=instructions,
-        model="gpt-4o-mini",
-        input=prompt
-    )
+    try:
+        response = openai_client.responses.create(
+            instructions=instructions,
+            model="gpt-4o-mini",
+            input=prompt
+        )
+    except RateLimitError as e:
+        return { 'error': 'rate limited'}
 
     return parse_output(response.output_text)
 

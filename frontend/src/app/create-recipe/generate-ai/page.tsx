@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { HeaderLayout } from "@/components/layouts/HeaderLayout";
 import BackButton from "@/components/interactables/BackButton";
+import api from "@/lib/axios"
 
 type GeneratedRecipe = {
   ingredients: string[];
@@ -11,7 +12,7 @@ type GeneratedRecipe = {
     calories: string;
     carbohydrates: string;
     protein: string;
-    fat: string;
+    fats: string;
     fiber: string;
   }
 };
@@ -48,22 +49,21 @@ export default function CreateRecipeAI() {
     setErrorMessage(null);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/ai/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim() }),
-      });
+      const response = await api.post("/ai/generate", { prompt: prompt.trim() });
 
-      if (!response.ok) {
+      if (response.status == 429) {
+        throw new Error("Rate limited");
+      }
+
+      if (response.status >= 400) {
         throw new Error("Failed to generate recipe");
       }
 
-      const data = await response.json();
+      const data = await response.data;
       const ingredients = Array.isArray(data?.ingredients) ? data.ingredients : [];
-      const nutrition = data.nutrients
+      const nutrition = data?.nutrients
       const steps = Array.isArray(data?.steps) ? data.steps : [];
 
-      console.log(nutrition)
       // if (!ingredients.length && !steps.length) {
       //   throw new Error("Invalid recipe response");
       // }
@@ -99,9 +99,14 @@ export default function CreateRecipeAI() {
       //   }
 
       setGeneratedRecipe({ ingredients, steps, nutrition });
-    } catch (error) {
+    } catch (error: unknown) {
+      if(error instanceof Error){
+        error.message === "Rate limited" ? 
+        setErrorMessage('Rate limited. Please try again in 20s'): 
+        setErrorMessage("We couldn't generate a recipe right now. Please try again.");
+      }
       console.error(error);
-      setErrorMessage("We couldn't generate a recipe right now. Please try again.");
+
     } finally {
       setIsSubmitting(false);
     }
@@ -115,25 +120,29 @@ export default function CreateRecipeAI() {
 
     setSaveFeedback(null);
 
-    // if (!hasGeneratedRecipe || !trimmedPrompt) {
-    //   setSaveFeedback("Generate a recipe before saving.");
-    //   return;
-    // }
+    if (!hasGeneratedRecipe || !trimmedPrompt) {
+      setSaveFeedback("Generate a recipe before saving.");
+      return;
+    }
 
-    // if (!trimmedTitle || !trimmedDescription || tagList.length === 0) {
-    //   setSaveFeedback("Add a title, description, and at least one tag to continue.");
-    //   return;
-    // }
-
+    if (!trimmedTitle || !trimmedDescription || tagList.length === 0) {
+      setSaveFeedback("Add a title, description, and at least one tag to continue.");
+      return;
+    }
 
       try{
-        const response = await fetch("http://127.0.0.1:8000/recipe/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: 'GFAGHUILGHAOGAKDGKASDGKGBL:SK:BNGSLGLKSGHSHOSOH' }),
-      });
+        const response = await api.post("/recipe/",{ 
+          title: trimmedTitle, 
+          original_prompt: trimmedPrompt, 
+          description: trimmedDescription, 
+          ingredients: generatedRecipe?.ingredients,
+          nutrients: generatedRecipe?.nutrition,
+          instructions: generatedRecipe?.steps,
 
-    } catch(error){
+        })
+      }
+
+     catch(error){
       console.log(error)
     }
 
@@ -236,7 +245,7 @@ export default function CreateRecipeAI() {
                     <li><span className="font-semibold">Protein:</span> {generatedRecipe.nutrition.protein}</li>
                     <li><span className="font-semibold">Carbohydrates:</span> {generatedRecipe.nutrition.carbohydrates}</li>
                     <li><span className="font-semibold">Fiber:</span> {generatedRecipe.nutrition.fiber}</li>
-                    <li><span className="font-semibold">Fat:</span> {generatedRecipe.nutrition.fat}</li>
+                    <li><span className="font-semibold">Fat:</span> {generatedRecipe.nutrition.fats}</li>
                     <li><span className="font-semibold">Calories:</span> {generatedRecipe.nutrition.calories}</li>
                   </ul>
                 ) : (
