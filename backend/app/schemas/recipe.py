@@ -43,6 +43,7 @@ class RecipeBase(BaseModel):
     comments: list[CommentResponse] = []  # fully embedded comments
     rating: Optional[float] = None
     no_rated: Optional[int] = 0
+    tags: Optional[list[str]] = []
     original_prompt: str
     verified: bool = False
 
@@ -63,10 +64,5 @@ class RecipeDB(RecipeBase):
             datetime: lambda v: v.isoformat()
         }
 
-class RecipeResponse(RecipeBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
+class RecipeList(BaseModel):
+    recipes: list[RecipeDB]
