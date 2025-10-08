@@ -92,6 +92,14 @@ def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_current_use
     )
     return {"message": "Recipe rated successfully"}
 
+@router.put("/comment/{recipe_id}")
+def comment_recipe(recipe_id: str, comment_id: str, comment: str, user: dict = Depends(get_current_user)):
+    recipe = recipe_db.find_one({"_id": recipe_id})
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    
+    pass
+
 @router.delete("/{recipe_id}")
 def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
     recipe = recipe_db.find_one({"_id": recipe_id})
