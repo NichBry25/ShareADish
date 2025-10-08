@@ -6,32 +6,19 @@ from .pyid import PyObjectId
 from .nutrient import Nutrients
 
 # --- Comment Models ---
-class CommentBase(BaseModel):
+class Comment(BaseModel):
     content: str
-    created_by: str  # User ID
-    image_url: Optional[str] = None
 
-class CommentCreate(CommentBase):
-    pass
-
-class CommentDB(CommentBase):
+class CommentCreate(Comment):
+    username: str
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {
-            ObjectId: str,
-            datetime: lambda v: v.isoformat()
-        }
-
-class CommentResponse(CommentBase):
-    id: str
+class CommentResponse(Comment):
+    username: str
+    content: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
 
 class Rating(BaseModel):
     username: str

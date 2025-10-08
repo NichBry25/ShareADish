@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from ...services import get_current_user
-from ...schemas import RecipeCreate, RecipeDB, RecipeList, RecipeSearch
+from ...schemas import RecipeCreate, RecipeDB, RecipeList, RecipeSearch, CommentCreate, CommentResponse, Comment
 from ...database import recipe_db
 from ...services import save_new_recipe
 
@@ -93,12 +93,19 @@ def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_current_use
     return {"message": "Recipe rated successfully"}
 
 @router.put("/comment/{recipe_id}")
-def comment_recipe(recipe_id: str, comment_id: str, comment: str, user: dict = Depends(get_current_user)):
+def comment_recipe(recipe_id: str, comment: Comment, user: dict = Depends(get_current_user)):
     recipe = recipe_db.find_one({"_id": recipe_id})
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    
-    pass
+
+    new_comment = comment.model_dump(by_alias=True)
+    new_comment["username"] = user["username"]
+    comment_db = CommentCreate.model_validate(new_comment).model_dump(by_alias=True)
+    recipe_db.update_one(
+        {"_id": recipe_id},
+        {"$push": {"comments": comment_db}}
+    )
+    return {"message": "Comment added successfully"}
 
 @router.delete("/{recipe_id}")
 def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
