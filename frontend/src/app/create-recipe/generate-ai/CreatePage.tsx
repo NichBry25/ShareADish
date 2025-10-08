@@ -3,7 +3,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { HeaderLayout } from "@/components/layouts/HeaderLayout";
 import BackButton from "@/components/interactables/BackButton";
-import api from "@/lib/axios"
 import CreateRecipeAILoading from "@/components/layouts/loadings/CreateRecipeAILoading";
 import { requireAuth } from "@/lib/auth/requireAuth";
 
@@ -58,54 +57,54 @@ export default function CreateRecipeAI() {
     setErrorMessage(null);
 
     try {
-      const response = await api.post("/ai/generate", { prompt: prompt.trim() });
+      // const response = await api.post("/ai/generate", { prompt: prompt.trim() });
 
-      if (response.status == 429) {
-        throw new Error("Rate limited");
-      }
+      // if (response.status == 429) {
+      //   throw new Error("Rate limited");
+      // }
 
-      if (response.status >= 400) {
-        throw new Error("Failed to generate recipe");
-      }
+      // if (response.status >= 400) {
+      //   throw new Error("Failed to generate recipe");
+      // }
 
-      const data = await response.data;
-      const ingredients = Array.isArray(data?.ingredients) ? data.ingredients : [];
-      const nutrition = data?.nutrients
-      const steps = Array.isArray(data?.steps) ? data.steps : [];
+      // const data = await response.data;
+      // const ingredients = Array.isArray(data?.ingredients) ? data.ingredients : [];
+      // const nutrition = data?.nutrients
+      // const steps = Array.isArray(data?.steps) ? data.steps : [];
 
       // if (!ingredients.length && !steps.length) {
       //   throw new Error("Invalid recipe response");
       // }
 
-      //   // Mocked response for demonstration purposes
-      //   await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate network delay
-      //   const ingredients = [
-      //     "200g spaghetti",
-      //     "1 cup mushrooms, sliced",
-      //     "2 cups fresh spinach",
-      //     "1/2 cup heavy cream",
-      //     "1/4 cup grated Parmesan cheese",
-      //     "2 cloves garlic, minced",
-      //     "2 tbsp olive oil",
-      //     "Salt and pepper to taste"
-      //   ];
-      //   const steps = [
-      //     "Cook the spaghetti according to package instructions. Drain and set aside.",
-      //     "In a large skillet, heat olive oil over medium heat. Add minced garlic and sauté until fragrant.",
-      //     "Add sliced mushrooms to the skillet and cook until they release their moisture and become tender.",
-      //     "Stir in the fresh spinach and cook until wilted.",
-      //     "Pour in the heavy cream and bring to a simmer. Let it cook for a few minutes until slightly thickened.",
-      //     "Add the cooked spaghetti to the skillet and toss to combine with the sauce.",
-      //     "Stir in grated Parmesan cheese and season with salt and pepper to taste.",
-      //     "Serve hot, garnished with extra Parmesan if desired."
-      //   ];
-      //   const nutrition = {
-      //     protein: "18g",
-      //     carbohydrates: "62g",
-      //     fiber: "7g",
-      //     fat: "15g",
-      //     calories: "480 kcal",
-      //   }
+        // Mocked response for demonstration purposes
+        await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate network delay
+        const ingredients = [
+          "200g spaghetti",
+          "1 cup mushrooms, sliced",
+          "2 cups fresh spinach",
+          "1/2 cup heavy cream",
+          "1/4 cup grated Parmesan cheese",
+          "2 cloves garlic, minced",
+          "2 tbsp olive oil",
+          "Salt and pepper to taste"
+        ];
+        const steps = [
+          "Cook the spaghetti according to package instructions. Drain and set aside.",
+          "In a large skillet, heat olive oil over medium heat. Add minced garlic and sauté until fragrant.",
+          "Add sliced mushrooms to the skillet and cook until they release their moisture and become tender.",
+          "Stir in the fresh spinach and cook until wilted.",
+          "Pour in the heavy cream and bring to a simmer. Let it cook for a few minutes until slightly thickened.",
+          "Add the cooked spaghetti to the skillet and toss to combine with the sauce.",
+          "Stir in grated Parmesan cheese and season with salt and pepper to taste.",
+          "Serve hot, garnished with extra Parmesan if desired."
+        ];
+        const nutrition = {
+          protein: "18g",
+          carbohydrates: "62g",
+          fiber: "7g",
+          fats: "15g",
+          calories: "480 kcal",
+        }
 
       setGeneratedRecipe({ ingredients, steps, nutrition });
     } catch (error: unknown) {
@@ -139,21 +138,21 @@ export default function CreateRecipeAI() {
       return;
     }
 
-      try{
-        const response = await api.post("/recipe/",{ 
-          title: trimmedTitle, 
-          original_prompt: trimmedPrompt, 
-          description: trimmedDescription, 
-          ingredients: generatedRecipe?.ingredients,
-          nutrients: generatedRecipe?.nutrition,
-          instructions: generatedRecipe?.steps,
+      // try{
+      //   const response = await api.post("/recipe/",{ 
+      //     title: trimmedTitle, 
+      //     original_prompt: trimmedPrompt, 
+      //     description: trimmedDescription, 
+      //     ingredients: generatedRecipe?.ingredients,
+      //     nutrients: generatedRecipe?.nutrition,
+      //     instructions: generatedRecipe?.steps,
 
-        })
-      }
+      //   })
+      // }
 
-     catch(error){
-      console.log(error)
-    }
+    //  catch(error){
+    //   console.log(error)
+    // }
 
     setSaveFeedback("All recipe details are ready. You're good to go!");
   };
