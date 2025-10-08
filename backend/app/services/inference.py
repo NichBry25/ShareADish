@@ -5,7 +5,7 @@ import json
 from typing import Dict, Any
 
 
-preload(load_data=True)
+preload(load_data=False)
 
 
 def parse_output(ai_output: str) -> Dict[str, Any]:

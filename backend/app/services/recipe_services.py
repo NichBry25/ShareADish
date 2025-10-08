@@ -4,7 +4,8 @@ from ..database import recipe_db
 
 def save_new_recipe(recipe_data: RecipeCreate, user: dict):
     recipe_doc = recipe_data.model_dump()
-    recipe_doc["created_by"] = user["id"]
+    print(user)
+    recipe_doc["created_by"] = user["username"]
     try:
         result = RecipeDB.model_validate(recipe_doc)
         inserted = recipe_db.insert_one(result.model_dump(by_alias=True))

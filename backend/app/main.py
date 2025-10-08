@@ -8,8 +8,8 @@ from .api import routers
 
 try:
     preload()
-except FileNotFoundError:
-    pass
+except Exception as e:
+    print(f"Preload failed: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
