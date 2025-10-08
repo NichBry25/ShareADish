@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from ...services import get_current_user
-from ...schemas import RecipeCreate, RecipeDB, RecipeList
+from ...schemas import RecipeCreate, RecipeDB, RecipeList, RecipeSearch
 from ...database import recipe_db
 from ...services import save_new_recipe
 
@@ -38,3 +38,32 @@ def get_recipe(recipe_id: str):
         return RecipeDB.model_validate(recipe)
     else:
         raise HTTPException(status_code=404, detail="Recipe not found")
+    
+@router.post("/search/")
+def search_recipes(payload: RecipeSearch):
+    search_filter = {}
+
+    # 🔍 1. Search by recipe title (case-insensitive)
+    if payload.query:
+        search_filter["title"] = {"$regex": payload.query, "$options": "i"}
+
+    # 🏷️ 2. Search by tags (if any provided)
+    if payload.tags:
+        search_filter["tags"] = {"$in": payload.tags}
+
+    # ⭐ 3. Filter by rating if needed
+    if payload.min_rating is not None:
+        # Assuming your documents have a numeric "rating" field
+        search_filter["rating"] = {"$gte": payload.min_rating}
+
+    # 📋 4. Query MongoDB
+    cursor = recipe_db.find(search_filter).limit(payload.max_results or 10)
+
+    # 🧩 5. Validate and serialize
+    recipes = [
+        RecipeDB.model_validate(recipe).model_dump(by_alias=True)
+        for recipe in cursor
+    ]
+
+    # 📦 6. Return structured response
+    return RecipeList(recipes=recipes)

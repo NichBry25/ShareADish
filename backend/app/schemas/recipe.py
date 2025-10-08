@@ -64,5 +64,11 @@ class RecipeDB(RecipeBase):
             datetime: lambda v: v.isoformat()
         }
 
+class RecipeSearch(BaseModel):
+    query: str
+    tags: Optional[list[str]] = []
+    min_rating: Optional[float] = None
+    max_results: Optional[int] = 10
+
 class RecipeList(BaseModel):
     recipes: list[RecipeDB]
