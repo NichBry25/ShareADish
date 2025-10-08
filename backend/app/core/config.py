@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Optional
 from pathlib import Path
 import os
 import cloudinary
@@ -16,8 +17,8 @@ class Settings(BaseSettings):
     FOUNDATIONAL_PATH: Path = DATA_DIR/'foundational.json'
     SRLEGACY_PATH: Path = DATA_DIR/'legacy.json'
 
-    OPENAI_API_KEY: str
-    CLOUDINARY_API_KEY: str
+    OPENAI_API_KEY: Optional[str] = None
+    CLOUDINARY_API_KEY: Optional[str] = None
     MONGODB_URL:str
 
     # add stuff for mongo later

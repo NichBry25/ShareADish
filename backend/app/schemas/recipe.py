@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from bson import ObjectId
 from pydantic import BaseModel, Field
 from .pyid import PyObjectId
+from .nutrient import Nutrients
 
 # --- Comment Models ---
 class CommentBase(BaseModel):
@@ -32,15 +33,14 @@ class CommentResponse(CommentBase):
     class Config:
         from_attributes = True
 
-
 # --- Recipe Models ---
 class RecipeBase(BaseModel):
     title: str
     description: Optional[str] = None
     ingredients: list[str]
     instructions: list[str]
+    nutrition: Nutrients
     comments: list[CommentResponse] = []  # fully embedded comments
-    created_by: str  # User ID
     rating: Optional[float] = None
     no_rated: Optional[int] = 0
     original_prompt: str
@@ -50,6 +50,7 @@ class RecipeCreate(RecipeBase):
     pass
 
 class RecipeDB(RecipeBase):
+    created_by: str  # User ID
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
