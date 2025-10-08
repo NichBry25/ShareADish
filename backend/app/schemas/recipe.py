@@ -3,35 +3,26 @@ from datetime import datetime, timezone
 from bson import ObjectId
 from pydantic import BaseModel, Field
 from .pyid import PyObjectId
+from .nutrient import Nutrients
 
 # --- Comment Models ---
-class CommentBase(BaseModel):
+class Comment(BaseModel):
     content: str
-    created_by: str  # User ID
-    image_url: Optional[str] = None
 
-class CommentCreate(CommentBase):
-    pass
-
-class CommentDB(CommentBase):
+class CommentCreate(Comment):
+    username: str
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {
-            ObjectId: str,
-            datetime: lambda v: v.isoformat()
-        }
-
-class CommentResponse(CommentBase):
-    id: str
+class CommentResponse(Comment):
+    username: str
+    content: str
     created_at: datetime
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
 
-    class Config:
-        from_attributes = True
-
+class Rating(BaseModel):
+    username: str
+    value: int
 
 # --- Recipe Models ---
 class RecipeBase(BaseModel):
@@ -39,10 +30,12 @@ class RecipeBase(BaseModel):
     description: Optional[str] = None
     ingredients: list[str]
     instructions: list[str]
+    nutrition: Nutrients
     comments: list[CommentResponse] = []  # fully embedded comments
-    created_by: str  # User ID
     rating: Optional[float] = None
+    rated_by: Optional[list[Rating]] = []
     no_rated: Optional[int] = 0
+    tags: Optional[list[str]] = []
     original_prompt: str
     verified: bool = False
 
@@ -50,6 +43,7 @@ class RecipeCreate(RecipeBase):
     pass
 
 class RecipeDB(RecipeBase):
+    created_by: str  # User ID
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -62,10 +56,11 @@ class RecipeDB(RecipeBase):
             datetime: lambda v: v.isoformat()
         }
 
-class RecipeResponse(RecipeBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
+class RecipeSearch(BaseModel):
+    query: str
+    tags: Optional[list[str]] = []
+    min_rating: Optional[float] = None
+    max_results: Optional[int] = 10
 
-    class Config:
-        from_attributes = True
+class RecipeList(BaseModel):
+    recipes: list[RecipeDB]

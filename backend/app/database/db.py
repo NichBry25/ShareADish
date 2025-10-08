@@ -1,16 +1,16 @@
 from pymongo import MongoClient
 import os 
 
-MONGO_URL = os.getenv("MONGODB_URL")
+MONGODB_URL = os.getenv("MONGODB_URL")
 
-client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
+client = MongoClient(MONGODB_URL, serverSelectionTimeoutMS=5000)
 shareadish = client.get_database("shareadish")
 
 user_db = shareadish.get_collection("users")
 recipe_db = shareadish.get_collection("recipes")
 
 def print_url():
-    print(f"MONGO_URL: {MONGO_URL}")
+    print(f"MONGODB_URL: {MONGODB_URL}")
 
 def ping_db():
     try:

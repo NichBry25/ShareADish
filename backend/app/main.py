@@ -1,6 +1,5 @@
 import uvicorn
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from .core import preload
 from .database import close_session
@@ -9,8 +8,8 @@ from os import getenv
 
 try:
     preload()
-except FileNotFoundError:
-    pass
+except Exception as e:
+    print(f"Preload failed: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

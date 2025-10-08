@@ -1,5 +1,6 @@
-from ...schemas import Nutrients, NutrientsRequest, ErrorResponse
-from fastapi import APIRouter, HTTPException
+from ...schemas import Nutrients, NutrientsRequest
+from fastapi import APIRouter
+from ...schemas import ErrorResponse
 from ...utils.matching import match_ingredients
 
 router = APIRouter(prefix="/nutrition",
