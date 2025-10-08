@@ -107,6 +107,31 @@ def comment_recipe(recipe_id: str, comment: Comment, user: dict = Depends(get_cu
     )
     return {"message": "Comment added successfully"}
 
+@router.delete("/comment/{recipe_id}/{comment_id}")
+def delete_comment(recipe_id: str, comment_id: str, user: dict = Depends(get_current_user)):
+    recipe = recipe_db.find_one({"_id": recipe_id})
+
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    comment_to_delete = None
+    for comment in recipe.get("comments", []):
+        if str(comment["_id"]) == comment_id:
+            comment_to_delete = comment
+            break
+
+    if not comment_to_delete:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    if comment_to_delete["username"] != user["username"]:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
+
+    recipe_db.update_one(
+        {"_id": recipe_id},
+        {"$pull": {"comments": {"_id": comment_to_delete["_id"]}}}
+    )
+    return {"message": "Comment deleted successfully"}
+
 @router.delete("/{recipe_id}")
 def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
     recipe = recipe_db.find_one({"_id": recipe_id})
