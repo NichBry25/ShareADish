@@ -10,7 +10,7 @@ def save_new_recipe(recipe_data: RecipeCreate, user: dict):
         result = RecipeDB.model_validate(recipe_doc)
         inserted = recipe_db.insert_one(result.model_dump(by_alias=True))
         return str(inserted.inserted_id)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to create recipe")
     
 if __name__ == "__main__":

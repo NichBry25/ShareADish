@@ -1,7 +1,7 @@
-from ..core import config
 import cloudinary.uploader
-from cloudinary.utils import cloudinary_url
-import uuid, time, secrets
+import uuid
+import time
+import secrets
 from io import BytesIO
 import os
 

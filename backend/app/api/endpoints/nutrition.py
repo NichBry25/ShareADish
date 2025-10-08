@@ -1,5 +1,5 @@
 from ...schemas import Nutrients, NutrientsRequest
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from ...schemas import ErrorResponse
 from ...utils.matching import match_ingredients
 

@@ -1,7 +1,6 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 from typing import Optional
 from pathlib import Path
-import os
 import cloudinary
 
 
