@@ -33,6 +33,10 @@ class CommentResponse(CommentBase):
     class Config:
         from_attributes = True
 
+class Rating(BaseModel):
+    username: str
+    value: int
+
 # --- Recipe Models ---
 class RecipeBase(BaseModel):
     title: str
@@ -42,7 +46,7 @@ class RecipeBase(BaseModel):
     nutrition: Nutrients
     comments: list[CommentResponse] = []  # fully embedded comments
     rating: Optional[float] = None
-    rated_by: Optional[list[str]] = []  # List of user IDs who rated
+    rated_by: Optional[list[Rating]] = []
     no_rated: Optional[int] = 0
     tags: Optional[list[str]] = []
     original_prompt: str

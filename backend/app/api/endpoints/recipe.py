@@ -68,7 +68,7 @@ def search_recipes(payload: RecipeSearch):
     # 📦 6. Return structured response
     return RecipeList(recipes=recipes)
 
-@router.put("/{recipe_id}")
+@router.put("/rate/{recipe_id}")
 def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_current_user)):
     recipe = recipe_db.find_one({"_id": recipe_id})
     
@@ -85,13 +85,22 @@ def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_current_use
     current_rating = recipe.get("rating", 0)
     new_rating = (current_rating * (no_rated - 1) + rating) / no_rated
     rated_by = recipe.get("rated_by", [])
-    rated_by.append(user["username"])
+    rated_by.append({"username": user["username"], "value": rating})
     recipe_db.update_one(
         {"_id": recipe_id},
         {"$set": {"rating": new_rating, "no_rated": no_rated, "rated_by": rated_by}}
     )
     return {"message": "Recipe rated successfully"}
 
+@router.delete("/{recipe_id}")
+def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
+    recipe = recipe_db.find_one({"_id": recipe_id})
 
-    
-    
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    if recipe["created_by"] != user["username"]:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this recipe")
+
+    recipe_db.delete_one({"_id": recipe_id})
+    return {"message": "Recipe deleted successfully"}
