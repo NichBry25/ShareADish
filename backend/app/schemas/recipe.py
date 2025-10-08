@@ -42,6 +42,7 @@ class RecipeBase(BaseModel):
     nutrition: Nutrients
     comments: list[CommentResponse] = []  # fully embedded comments
     rating: Optional[float] = None
+    rated_by: Optional[list[str]] = []  # List of user IDs who rated
     no_rated: Optional[int] = 0
     tags: Optional[list[str]] = []
     original_prompt: str

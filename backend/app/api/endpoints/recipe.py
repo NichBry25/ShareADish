@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
+from bson import ObjectId
 from ...services import get_current_user
 from ...schemas import RecipeCreate, RecipeDB, RecipeList, RecipeSearch
 from ...database import recipe_db
@@ -67,3 +68,31 @@ def search_recipes(payload: RecipeSearch):
 
     # 📦 6. Return structured response
     return RecipeList(recipes=recipes)
+
+@router.put("/{recipe_id}")
+def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_current_user)):
+    recipe = recipe_db.find_one({"_id": recipe_id})
+    
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    
+    if user["username"] in recipe.get("rated_by", []):
+        raise HTTPException(status_code=400, detail="User has already rated this recipe")
+    
+    if rating < 1 or rating > 5:
+        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+    
+    no_rated = recipe.get("no_rated", 0) + 1
+    current_rating = recipe.get("rating", 0)
+    new_rating = (current_rating * (no_rated - 1) + rating) / no_rated
+    rated_by = recipe.get("rated_by", [])
+    rated_by.append(user["username"])
+    recipe_db.update_one(
+        {"_id": recipe_id},
+        {"$set": {"rating": new_rating, "no_rated": no_rated, "rated_by": rated_by}}
+    )
+    return {"message": "Recipe rated successfully"}
+
+
+    
+    
