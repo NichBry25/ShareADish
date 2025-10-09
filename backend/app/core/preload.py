@@ -20,8 +20,8 @@ def preload(load_data=False):
     try:
         openai_client = OpenAI(api_key = settings.OPENAI_API_KEY)
     except Exception as e:
-            print(f"OpenAI client initialization failed: {e}")
-            openai_client = None
+        print(f"OpenAI client initialization failed: {e}")
+        openai_client = None
 
     if(load_data):
         # Normalize each food description

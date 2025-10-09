@@ -1,8 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends
+from io import BytesIO
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from ...services import get_current_user
 from ...schemas import RecipeCreate, RecipeDB, RecipeList, RecipeSearch, CommentCreate, CommentResponse, Comment
 from ...database import recipe_db
 from ...services import save_new_recipe
+from ...services.image import upload 
+from typing import Optional
 
 router = APIRouter(prefix="/recipe", tags=["recipe"])
 
@@ -42,30 +45,17 @@ def get_recipe(recipe_id: str):
 @router.post("/search/")
 def search_recipes(payload: RecipeSearch):
     search_filter = {}
-
-    # 🔍 1. Search by recipe title (case-insensitive)
     if payload.query:
         search_filter["title"] = {"$regex": payload.query, "$options": "i"}
-
-    # 🏷️ 2. Search by tags (if any provided)
     if payload.tags:
         search_filter["tags"] = {"$in": payload.tags}
-
-    # ⭐ 3. Filter by rating if needed
     if payload.min_rating is not None:
-        # Assuming your documents have a numeric "rating" field
         search_filter["rating"] = {"$gte": payload.min_rating}
-
-    # 📋 4. Query MongoDB
     cursor = recipe_db.find(search_filter).limit(payload.max_results or 10)
-
-    # 🧩 5. Validate and serialize
     recipes = [
         RecipeDB.model_validate(recipe).model_dump(by_alias=True)
         for recipe in cursor
     ]
-
-    # 📦 6. Return structured response
     return RecipeList(recipes=recipes)
 
 @router.put("/rate/{recipe_id}")
@@ -93,14 +83,23 @@ def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_current_use
     return {"message": "Recipe rated successfully"}
 
 @router.put("/comment/{recipe_id}")
-def comment_recipe(recipe_id: str, comment: Comment, user: dict = Depends(get_current_user)):
+def comment_recipe(recipe_id: str, content: str = Form(...), image: Optional[UploadFile] = File(None), user: dict = Depends(get_current_user)):
     recipe = recipe_db.find_one({"_id": recipe_id})
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
-    new_comment = comment.model_dump(by_alias=True)
-    new_comment["username"] = user["username"]
-    comment_db = CommentCreate.model_validate(new_comment).model_dump(by_alias=True)
+    url = None
+    if image:
+        file_bytes = BytesIO(image.read())
+        url = upload(file_bytes)
+    
+    comment_doc = {
+        'username':user['username'],
+        'content':content,
+        'image_url':url
+    }
+
+    comment_db= CommentCreate.model_validate(comment_doc).model_dump(by_alias=True)
     recipe_db.update_one(
         {"_id": recipe_id},
         {"$push": {"comments": comment_db}}

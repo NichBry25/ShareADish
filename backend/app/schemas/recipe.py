@@ -4,10 +4,12 @@ from bson import ObjectId
 from pydantic import BaseModel, Field
 from .pyid import PyObjectId
 from .nutrient import Nutrients
+from fastapi import UploadFile
 
 # --- Comment Models ---
 class Comment(BaseModel):
     content: str
+    image_url: Optional[str]
 
 class CommentCreate(Comment):
     username: str
