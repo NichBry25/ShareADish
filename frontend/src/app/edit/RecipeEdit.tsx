@@ -19,8 +19,6 @@ type Nutrition = {
     fiber: string;
 } 
 
-
-
 type Recipe = {
   id: string;
   title: string;
@@ -32,17 +30,27 @@ type Recipe = {
 };
 type RecipeEditProps = {
   recipe: Recipe;
+  onSubmit?: (payload: EditableRecipePayload) => Promise<void> | void;
 };
 
 const initialInstructions = "Describe what you want to change from the recipe.";
 
+export type EditableRecipePayload = {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  ingredients: string[];
+  steps: string[];
+  nutrition: Nutrition;
+};
 
 const makeId = () => Math.random().toString(36).slice(2, 10);
 
-export default function RecipeEdit({recipe}:RecipeEditProps) {
+export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
   const id = recipe.id
   const [isLoading, setIsLoading] = useState(true);
-  const [title, setTitle] = useState(recipe.id);
+  const [title, setTitle] = useState(recipe.title);
   const [description, setDescription] = useState(recipe.description);
   const [selectedTags, setSelectedTags] = useState<string[]>(recipe.tags); 
   const [ingredients, setIngredients] = useState<ListItem[]>(recipe.ingredients.map(i=>({ id: makeId(), value: i })));
@@ -53,6 +61,7 @@ export default function RecipeEdit({recipe}:RecipeEditProps) {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
 
@@ -125,7 +134,7 @@ export default function RecipeEdit({recipe}:RecipeEditProps) {
     setSteps((current) => current.filter((item) => item.id !== id));
   };
 
-  const handleSave = (event: MouseEvent<HTMLButtonElement>) => {
+  const handleSave = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     resetFeedback();
 
@@ -154,7 +163,30 @@ export default function RecipeEdit({recipe}:RecipeEditProps) {
       return;
     }
 
-    setSaveFeedback("All recipe details look great. You're ready to publish!");
+    const payload: EditableRecipePayload = {
+      id,
+      title: title.trim(),
+      description: description.trim(),
+      tags: selectedTags,
+      ingredients: filledIngredients,
+      steps: filledSteps,
+      nutrition,
+    };
+
+    if (onSubmit) {
+      try {
+        setIsSaving(true);
+        await onSubmit(payload);
+        setSaveFeedback("Recipe saved successfully.");
+      } catch (error) {
+        console.error("Recipe save failed", error);
+        setFormError("Unable to save changes right now. Please try again.");
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
+      setSaveFeedback("All recipe details look great. You're ready to publish!");
+    }
   };
 
   const handleGenerate = async (event: FormEvent<HTMLFormElement>) => {
@@ -533,9 +565,10 @@ export default function RecipeEdit({recipe}:RecipeEditProps) {
         <button
           type="button"
           onClick={handleSave}
-          className="rounded-lg bg-[#344f1f] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#2a3e19]"
+          disabled={isSaving}
+          className="rounded-lg bg-[#344f1f] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#2a3e19] disabled:cursor-not-allowed disabled:bg-[#344f1f]/50"
         >
-          Save
+          {isSaving ? "Saving…" : "Save"}
         </button>
       </div>
     </main>
