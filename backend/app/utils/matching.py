@@ -197,9 +197,6 @@ def extract_main_nutrients(amount,nutrients):
     if amount <= -1:
         return return_val
 
-    if not nutrients:
-        return return_val
-
     if "Protein" in nutrients:
         return_val['protein'] = round((nutrients["Protein"]/100) * amount,3)
     if "Total lipid (fat)" in nutrients:
@@ -287,12 +284,21 @@ def extract_amount(ingredient: str):
         if amount_word in ingredients_words:
             ingredients_words.remove(amount_word)
         grams *= number
-    else:
+
+        for i, word in enumerate(ingredients_words):
+            if re.search(r"\d", word):  # contains number
+                ingredients_words[i] = re.sub(r"\d+(?:\.\d+)?", "", word).strip()
+                if ingredients_words[i] == "":
+                    ingredients_words.pop(i)
+                break
+        
         for i,word in enumerate(ingredients_words):
             if word in UNIT_MAP.keys(): # If not, find an appropriate unit in the string and map it to the grams
                 grams = UNIT_MAP[word]
                 word_removed.append(word)
 
+
+            
         
 
     # Remove noise
@@ -322,7 +328,6 @@ def match_ingredients(ingredients_list: List[str]):
 
     for ing in ingredients_list:
         grams, cleaned_ing = extract_amount(ing)
-
         if any(fuzz.WRatio(cleaned_ing, ignore) > 80 for ignore in IGNORE_FOR_NUTRIENTS):
             nutrients = {
                 'protein': 0,
@@ -346,7 +351,6 @@ def match_ingredients(ingredients_list: List[str]):
     res_nutrients['fiber']=f"{res_nutrients['fiber']:.3f}g"
     res_nutrients['calories']=f"{res_nutrients['calories']:.3f}kcal"
     res_nutrients['fats']=f"{res_nutrients['fats']:.3f}g"
-
     return res_nutrients
 
 
@@ -356,7 +360,5 @@ if __name__ == '__main__':
 
 
     print(json.dumps(match_ingredients(
-        ['300g pasta, cooked, 2 cups', '200g mushrooms, sliced, 2 cups', '150g spinach, fresh, 3 cups', '1 cup heavy cream', '2 tablespoons olive oil', '2 cloves garlic, minced, 2 pieces', 'Salt, to taste', 'Pepper, to taste']), 
-        indent=4
-    ))
+    ['400g chicken breast, diced, 2 pieces', '1 cup rice, uncooked, 1 cup', '250g mushrooms, sliced, 2 cups', '2 tablespoons olive oil', '2 cups chicken broth', '1 teaspoon salt', '1/2 teaspoon black pepper', '1 teaspoon garlic powder']), indent=4))
     print(extract_amount('1/2 large cauliflower, cut into florets'))

@@ -1,21 +1,21 @@
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from contextlib import asynccontextmanager
 from .core import preload
 from .database import close_session
 from .api import routers
 from os import getenv
 
-try:
-    preload()
-except Exception as e:
-    print(f"Preload failed: {e}")
+
+preload(load_data=True)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # startup code
     print("App Startup!")
-    print(getenv('MONGODB_URL'))
     yield
     # shutdown code
     close_session()
