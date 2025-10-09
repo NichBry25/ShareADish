@@ -10,6 +10,7 @@ export default function SignupPage() {
     const router = useRouter();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -17,14 +18,20 @@ export default function SignupPage() {
         e.preventDefault();
         setError(null);
         setIsSubmitting(true);
+        if(password !== confirmPassword){
+            setError("Passwords are not the same")
+            setIsSubmitting(false)
+            return
+        }
         const result = await signup(username, password);
         setIsSubmitting(false);
-
+        console.log(result)
         if (result.success) {
             router.push("/");
         } else {
             setError(result.error ?? "Unable to sign up.");
         }
+        
     }
 
     return (
@@ -57,6 +64,18 @@ export default function SignupPage() {
                                 placeholder="Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                autoComplete="new-password"
+                            />
+                            <label className="block text-sm font-medium text-neutral-700" htmlFor="password">
+                                Confirm password
+                            </label>
+                            <input
+                                id="confirmpassword"
+                                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-500/50"
+                                type="password"
+                                placeholder="Password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
                                 autoComplete="new-password"
                             />
                         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import api from '@/lib/axios'
 
 type AuthActionResult = {
     success: boolean;
@@ -68,26 +69,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleAuthRequest = useCallback(
         async (url: string, payload: { username: string; password: string }): Promise<AuthActionResult> => {
             try {
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify(payload),
+                if(url==='/user/'){
+                    const res = await api.post(url, { username:payload.username, password:payload.password});
+                    const data: { success?: boolean; error?: string } = res.data || {};
+                    if (res.status >=400) {
+                        return {
+                            success: false,
+                            error: data.error ?? 'Something went wrong. Please try again.',
+                        };
+                    }
+                    return { success: true };
+                }
+
+
+                const params = new URLSearchParams();
+                params.append("username", payload.username);
+                params.append("password", payload.password);
+
+                const res = await api.post("/user/login", params, {
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 });
-
-                const data: { success?: boolean; token?: string; error?: string } = await res.json().catch(
-                    () => ({})
-                );
-
-                if (!res.ok || !data.success) {
+                const data: { access_token?: string; error?: string } = res.data || {};
+                if(res.status >= 400){
                     return {
                         success: false,
                         error: data.error ?? 'Something went wrong. Please try again.',
                     };
                 }
-
-                if (typeof data.token === 'string') {
-                    setToken(data.token);
+                console.log(data.access_token)
+                if (typeof data.access_token === 'string') {
+                    setToken(data.access_token);
                 } else {
                     await refreshSession();
                 }
@@ -105,12 +116,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     const login = useCallback(
-        (username: string, password: string) => handleAuthRequest('/api/login', { username, password }),
+        (username: string, password: string) => handleAuthRequest('/user/login', { username, password }),
         [handleAuthRequest]
     );
 
     const signup = useCallback(
-        (username: string, password: string) => handleAuthRequest('/api/signup', { username, password }),
+        (username: string, password: string) => handleAuthRequest('/user/', { username, password }),
         [handleAuthRequest]
     );
 

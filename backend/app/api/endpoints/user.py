@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from ...schemas import UserCreate, UserResponse, ErrorResponse
 from ...services import register_user, login_user, get_current_user
@@ -20,9 +20,17 @@ async def register_route(user_data: UserCreate):
     return UserResponse(id=id, username=username)
 
 @router.post("/login", response_model=dict, responses={401: {"model": ErrorResponse}})
-async def login_route(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_route(response:Response, form_data: OAuth2PasswordRequestForm = Depends()):
     try:
-        return login_user(form_data.username, form_data.password)
+        tokens = login_user(form_data.username, form_data.password)
+        response.set_cookie(
+            key="access_token",
+            value=tokens['access_token'],
+            secure=True,
+            httponly=True,
+            samesite="none",
+        )
+        return tokens
     except HTTPException as e:
         raise e
 
