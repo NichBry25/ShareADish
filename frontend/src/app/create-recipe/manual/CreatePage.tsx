@@ -155,7 +155,7 @@ export default function CreateRecipeManual() {
       setFormError("Provide at least one nutritional detail.");
       return;
     }
-
+    
     setSaveFeedback("All recipe details look great. You're ready to publish!");
   };
 

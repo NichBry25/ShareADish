@@ -5,7 +5,7 @@ import { HeaderLayout } from "@/components/layouts/HeaderLayout";
 import BackButton from "@/components/interactables/BackButton";
 import api from "@/lib/axios"
 import CreateRecipeAILoading from "@/components/layouts/loadings/CreateRecipeAILoading";
-import { requireAuth } from "@/lib/auth/requireAuth";
+import { useUsername } from "@/app/context/UsernameContext";
 
 type GeneratedRecipe = {
   ingredients: string[];
@@ -19,11 +19,14 @@ type GeneratedRecipe = {
   }
 };
 
+type CreatePageProp = {
+  token:string;
+}
 const initialInstructions =
   "Describe what you are craving, dietary preferences, cooking method, or any ingredients you'd like to feature.";
 
-export default function CreateRecipeAI() {
-  
+export default function CreateRecipeAI({token}:CreatePageProp) {
+  const { username } = useUsername()
   const [isLoading, setIsLoading] = useState(true);
   const [prompt, setPrompt] = useState("");
   const [generatedRecipe, setGeneratedRecipe] = useState<GeneratedRecipe | null>(null);
@@ -145,11 +148,11 @@ export default function CreateRecipeAI() {
           original_prompt: trimmedPrompt, 
           description: trimmedDescription, 
           ingredients: generatedRecipe?.ingredients,
-          nutrients: generatedRecipe?.nutrition,
+          nutrition: generatedRecipe?.nutrition,
           instructions: generatedRecipe?.steps,
-
         })
       }
+      // TODO Get id to do smth
 
      catch(error){
       console.log(error)

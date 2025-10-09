@@ -1,7 +1,7 @@
 # Handles user CRUD
 from ..core import hash_password, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, oauth2_scheme, decode_access_token
 from pymongo.errors import DuplicateKeyError
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, Request
 from datetime import timedelta
 from ..database import user_db
 from ..schemas import UserCreate
@@ -59,13 +59,18 @@ def login_user(username: str, password: str):
 
     return {"access_token": token, "token_type": "bearer"}
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(request: Request): # mb bro i have to change this to a cookie based instead of header based
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication token",
+        )
     payload = decode_access_token(token)
     if not payload:
         raise HTTPException(
-            status_code=401,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
         )
     return {"username": payload.get("sub")}
 

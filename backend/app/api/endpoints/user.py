@@ -26,9 +26,9 @@ async def login_route(response:Response, form_data: OAuth2PasswordRequestForm = 
         response.set_cookie(
             key="access_token",
             value=tokens['access_token'],
-            secure=True,
+            secure=False,
             httponly=True,
-            samesite="none",
+            samesite="lax",  # use "lax" instead of "none" for localhost
         )
         return tokens
     except HTTPException as e:

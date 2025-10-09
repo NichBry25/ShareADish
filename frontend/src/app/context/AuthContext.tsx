@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import api from '@/lib/axios'
-
+import { useUsername } from './UsernameContext';
 type AuthActionResult = {
     success: boolean;
     error?: string;
@@ -19,10 +19,11 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-
+    const { username, setUsername } = useUsername()
     const refreshSession = useCallback(async () => {
         try {
             const res = await fetch('/api/session', {
@@ -96,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         error: data.error ?? 'Something went wrong. Please try again.',
                     };
                 }
-                console.log(data.access_token)
+                setUsername(payload.username)
                 if (typeof data.access_token === 'string') {
                     setToken(data.access_token);
                 } else {

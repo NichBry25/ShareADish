@@ -2,7 +2,7 @@ import { requireAuth } from "@/lib/auth/requireAuth";
 import CreateRecipeAI from "./CreatePage";
 
 export default async function CreateRecipeAIPage() {
-  await requireAuth(); 
+  const token = await requireAuth(); 
 
-  return <CreateRecipeAI />;
+  return <CreateRecipeAI token={token}/>;
 }
