@@ -13,7 +13,7 @@ export default function BackButton({ showReturnModal = true }: BackButtonProps) 
 
   const handleConfirm = useCallback(() => {
     setShowModal(false);
-    router.back();
+    router.push("/"); // ✅ Always go to homepage
   }, [router]);
 
   const handleCancel = useCallback(() => {
@@ -37,7 +37,7 @@ export default function BackButton({ showReturnModal = true }: BackButtonProps) 
     if (showReturnModal) {
       setShowModal(true);
     } else {
-      router.back();
+      router.push("/"); // ✅ Go straight to homepage without modal
     }
   };
 
