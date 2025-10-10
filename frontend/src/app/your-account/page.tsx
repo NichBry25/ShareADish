@@ -7,21 +7,22 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { userRecipes } from "@/data/userRecipes";
 import api from "@/lib/axios";
+import { useAuth } from "../context/AuthContext";
 export default async function page() {
     await requireAuth();
+
     async function logoutAction() {
         "use server";
 
         (await cookies()).delete(AUTH_COOKIE_NAME);
         redirect("/login");
     }
-    const username=""
+    let username;
     try{
-        
-        const res = await api.get('/user/me')
+        const res = await api.get("/user/me")
         if(res.status>=200 && res.status <=300){
             const data = res.data
-            const username = data.username
+            username = data.username
         }
     }catch (err) {
         console.error(err);

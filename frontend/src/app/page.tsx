@@ -12,11 +12,10 @@ import CreateRecipeButton from "@/components/interactables/CreateRecipeButton";
 import LoadingForMainPage from "@/components/layouts/loadings/MainPageLoading";
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000); 
-    return () => clearTimeout(timer);
+    // const recipes = axios.get()
   }, []);
 
   if (isLoading){
