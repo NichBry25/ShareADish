@@ -22,13 +22,9 @@ export default async function page() {
     let username;
     
     try{
-<<<<<<< HEAD
-        const res = await api.get('/user/me')
-=======
         const res = await api.get("/user/me", {
             headers: { Cookie: `access_token=${token}` },
         });
->>>>>>> 34a7ecc8334e66bbf8fd602ca7a117085ec22bad
         if(res.status>=200 && res.status <=300){
             const data = res.data
             username = data.username
