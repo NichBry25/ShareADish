@@ -10,6 +10,8 @@ import api from "@/lib/axios";
 import { useAuth } from "../context/AuthContext";
 export default async function page() {
     await requireAuth();
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
 
     async function logoutAction() {
         "use server";
@@ -18,8 +20,11 @@ export default async function page() {
         redirect("/login");
     }
     let username;
+    
     try{
-        const res = await api.get("/user/me")
+        const res = await api.get("/user/me", {
+            headers: { Cookie: `access_token=${token}` },
+        });
         if(res.status>=200 && res.status <=300){
             const data = res.data
             username = data.username
