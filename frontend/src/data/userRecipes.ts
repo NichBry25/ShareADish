@@ -1,4 +1,5 @@
 import { recipeMap } from "@/data/recipes";
+import api from "@/lib/axios";
 
 export type UserRecipe = {
   id: string;
@@ -32,6 +33,8 @@ const editableIds = [
   "maple-tahini-granola",
 ];
 
+
+
 const createUserRecipe = (id: string): UserRecipe | null => {
   const detail = recipeMap[id];
   if (!detail) {
@@ -60,6 +63,7 @@ export const userRecipeMap: Record<string, UserRecipe> = userRecipeEntries.reduc
 
 export const userRecipes = userRecipeEntries;
 
-export function getUserRecipeById(id: string) {
+export async function getUserRecipeById(id: string) {
+
   return userRecipeMap[id];
 }

@@ -6,18 +6,26 @@ import { requireAuth } from "@/lib/auth/requireAuth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { userRecipes } from "@/data/userRecipes";
-
-export default async function AccountPage() {
+import api from "@/lib/axios";
+export default async function page() {
     await requireAuth();
-
     async function logoutAction() {
         "use server";
 
         (await cookies()).delete(AUTH_COOKIE_NAME);
         redirect("/login");
     }
-
-    const usernamePlaceholder = "YourUsername";
+    const username=""
+    try{
+        
+        const res = await api.get('/user/me')
+        if(res.status>=200 && res.status <=300){
+            const data = res.data
+            const username = data.username
+        }
+    }catch (err) {
+        console.error(err);
+    }
 
     return (
         <main className="min-h-screen bg-zinc-50">
@@ -42,7 +50,7 @@ export default async function AccountPage() {
                     <dl className="space-y-4">
                         <div>
                             <dt className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Account name</dt>
-                            <dd className="mt-1 text-lg font-medium text-neutral-900">{usernamePlaceholder}</dd>
+                            <dd className="mt-1 text-lg font-medium text-neutral-900">{username}</dd>
                         </div>
                     </dl>
                 </section>

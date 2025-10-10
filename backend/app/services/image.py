@@ -6,12 +6,12 @@ from io import BytesIO
 import os
 
 
-def upload(file: BytesIO) -> str: 
+async def upload(file: BytesIO) -> str: 
     '''
     Input has to be an image byte, will return url to the image
     '''
     id = f"{int(time.time())}_{uuid.uuid4().hex}_{secrets.token_hex(4)}" # uuid + time + random hex to make sure its unique
-    upload_result = cloudinary.uploader.upload(file,public_id=id)
+    upload_result = await cloudinary.uploader.upload(file,public_id=id)
     return upload_result["secure_url"]
 
 if __name__ == '__main__':

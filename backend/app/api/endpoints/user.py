@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Response
+from fastapi import APIRouter, HTTPException, Depends, Response, Cookie
 from fastapi.security import OAuth2PasswordRequestForm
 from ...schemas import UserCreate, UserResponse, ErrorResponse
 from ...services import register_user, login_user, get_current_user
@@ -34,6 +34,8 @@ async def login_route(response:Response, form_data: OAuth2PasswordRequestForm = 
     except HTTPException as e:
         raise e
 
-@router.get("/me", response_model=dict, responses={401: {"model": ErrorResponse}})
-async def me_route(current_user: dict = Depends(get_current_user)):
-    return current_user
+@router.get("/me", response_model=dict)
+async def me_route(user: dict = Depends(get_current_user)):
+    print(user)
+    return user
+

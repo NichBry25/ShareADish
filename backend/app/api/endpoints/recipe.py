@@ -1,7 +1,7 @@
 from io import BytesIO
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from ...services import get_current_user
-from ...schemas import RecipeCreate, RecipeDB, RecipeList, RecipeSearch, CommentCreate, CommentResponse, Comment
+from ...schemas import RecipeCreate,ErrorResponse, RecipeDB, RecipeList, RecipeSearch, CommentCreate, CommentResponse, Comment
 from ...database import recipe_db
 from ...services import save_new_recipe
 from ...services.image import upload 
@@ -10,7 +10,7 @@ from typing import Optional
 router = APIRouter(prefix="/recipe", tags=["recipe"])
 
 @router.get("/", response_model=RecipeList)
-def return_all_recipe(limit: int = 10):
+async def return_all_recipe(limit: int = 10):
     """
     Fetch all recipes from the database with an optional limit.
     1. Query the database for recipes, limiting the number of results.
@@ -19,17 +19,17 @@ def return_all_recipe(limit: int = 10):
     """
     recipes = [
         RecipeDB.model_validate(recipe).model_dump(by_alias=True)
-        for recipe in recipe_db.find().limit(limit)
+        for recipe in await recipe_db.find().limit(limit)
     ]
     return {"recipes": recipes}
 
 @router.post("/")
-def post_recipe(recipe_post: RecipeCreate, user:dict = Depends(get_current_user)):
+async def post_recipe(recipe_post: RecipeCreate, user:dict = Depends(get_current_user)):
     new_recipe_id = save_new_recipe(recipe_post, user)
     return {"id": new_recipe_id}
 
 @router.get("/{recipe_id}", response_model=RecipeDB)
-def get_recipe(recipe_id: str):
+async def get_recipe(recipe_id: str):
     """
     Fetch a specific recipe by its ID.
     1. Query the database for the recipe with the given ID.
@@ -43,7 +43,7 @@ def get_recipe(recipe_id: str):
         raise HTTPException(status_code=404, detail="Recipe not found")
     
 @router.post("/search/")
-def search_recipes(payload: RecipeSearch):
+async def search_recipes(payload: RecipeSearch):
     search_filter = {}
     if payload.query:
         search_filter["title"] = {"$regex": payload.query, "$options": "i"}
@@ -59,8 +59,8 @@ def search_recipes(payload: RecipeSearch):
     return RecipeList(recipes=recipes)
 
 @router.put("/rate/{recipe_id}")
-def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_current_user)):
-    recipe = recipe_db.find_one({"_id": recipe_id})
+async def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_current_user)):
+    recipe = await recipe_db.find_one({"_id": recipe_id})
     
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
@@ -83,15 +83,15 @@ def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_current_use
     return {"message": "Recipe rated successfully"}
 
 @router.put("/comment/{recipe_id}")
-def comment_recipe(recipe_id: str, content: str = Form(...), image: Optional[UploadFile] = File(None), user: dict = Depends(get_current_user)):
-    recipe = recipe_db.find_one({"_id": recipe_id})
+async def comment_recipe(recipe_id: str, content: str = Form(...), image: Optional[UploadFile] = File(None), user: dict = Depends(get_current_user)):
+    recipe = await recipe_db.find_one({"_id": recipe_id})
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
     url = None
     if image:
         file_bytes = BytesIO(image.read())
-        url = upload(file_bytes)
+        url = await upload(file_bytes)
     
     comment_doc = {
         'username':user['username'],
@@ -107,8 +107,8 @@ def comment_recipe(recipe_id: str, content: str = Form(...), image: Optional[Upl
     return {"message": "Comment added successfully"}
 
 @router.delete("/comment/{recipe_id}/{comment_id}")
-def delete_comment(recipe_id: str, comment_id: str, user: dict = Depends(get_current_user)):
-    recipe = recipe_db.find_one({"_id": recipe_id})
+async def delete_comment(recipe_id: str, comment_id: str, user: dict = Depends(get_current_user)):
+    recipe = await recipe_db.find_one({"_id": recipe_id})
 
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
@@ -132,8 +132,8 @@ def delete_comment(recipe_id: str, comment_id: str, user: dict = Depends(get_cur
     return {"message": "Comment deleted successfully"}
 
 @router.delete("/{recipe_id}")
-def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
-    recipe = recipe_db.find_one({"_id": recipe_id})
+async def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
+    recipe = await recipe_db.find_one({"_id": recipe_id})
 
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
