@@ -7,20 +7,31 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 // import { userRecipes } from "@/data/userRecipes";
 import api from "@/lib/axios";
+import { useAuth } from "../context/AuthContext";
 export default async function page() {
     await requireAuth();
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
+
     async function logoutAction() {
         "use server";
 
         (await cookies()).delete(AUTH_COOKIE_NAME);
         redirect("/login");
     }
-    const username=""
+    let username;
+    
     try{
+<<<<<<< HEAD
         const res = await api.get('/user/me')
+=======
+        const res = await api.get("/user/me", {
+            headers: { Cookie: `access_token=${token}` },
+        });
+>>>>>>> 34a7ecc8334e66bbf8fd602ca7a117085ec22bad
         if(res.status>=200 && res.status <=300){
             const data = res.data
-            const username = data.username
+            username = data.username
         }
     }catch (err) {
         console.error(err);

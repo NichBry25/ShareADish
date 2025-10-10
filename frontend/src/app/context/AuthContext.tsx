@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         error: data.error ?? 'Something went wrong. Please try again.',
                     };
                 }
-                setUsername(payload.username)
+                console.log(data.access_token)
                 if (typeof data.access_token === 'string') {
                     setToken(data.access_token);
                 } else {
@@ -148,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
     const ctx = useContext(AuthContext);
+
     if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
     return ctx;
 }

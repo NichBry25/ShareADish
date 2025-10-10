@@ -14,9 +14,10 @@ import LoadingForMainPage from "@/components/layouts/loadings/MainPageLoading"
 import { setRecipes } from "@/data/recipes";
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+<<<<<<< HEAD
     const fetchRecipes = async () => {
       try {
         const response = await api.get('/recipe/')
@@ -30,6 +31,9 @@ export default function Home() {
     }
 
     fetchRecipes();
+=======
+    // const recipes = axios.get()
+>>>>>>> 34a7ecc8334e66bbf8fd602ca7a117085ec22bad
   }, []);
 
   if (isLoading){
