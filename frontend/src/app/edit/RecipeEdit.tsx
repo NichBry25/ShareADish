@@ -6,7 +6,7 @@ import BackButton from "@/components/interactables/BackButton";
 import { HeaderLayout } from "@/components/layouts/HeaderLayout";
 import CreateRecipeManualLoading from "@/components/layouts/loadings/CreateRecipeManualLoading";
 import api from "@/lib/axios"
-
+import { updateRecipe } from "@/lib/updateRecipe";
 type ListItem = {
   id: string;
   value: string;
@@ -27,7 +27,8 @@ type Recipe = {
   tags: string[];
   ingredients: string[];
   steps: string[];
-  nutrition: Nutrition
+  nutrition: Nutrition;
+  prompt: string; // <- TODO, idk how recipe is passed
 };
 type RecipeEditProps = {
   recipe: Recipe;
@@ -42,14 +43,15 @@ export type EditableRecipePayload = {
   description: string;
   tags: string[];
   ingredients: string[];
-  steps: string[];
+  instructions: string[];
   nutrition: Nutrition;
+  original_prompt: string;
 };
 
 const makeId = () => Math.random().toString(36).slice(2, 10);
-
 export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
   const id = recipe.id
+  const [originalPrompt, setOriginalPrompt] = useState(recipe.prompt)
   const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState(recipe.title);
   const [description, setDescription] = useState(recipe.description);
@@ -96,21 +98,20 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
 
   const handleIngredientChange = (id: string, value: string) => {
     resetFeedback();
-    // TODO Pass current ingredient to api
     setIngredients((current) =>
       current.map((item) => (item.id === id ? { ...item, value } : item)),
     );
   };
 
   const handleRefreshNutritional = async () => {
-    const res = await api.post('/nutrition', nutrition)
+    const res = await api.post('/nutrition', filledIngredients)
     if(res.status >= 200 && res.status <= 300){
       const data = res.data
       setNutrition({
         calories: data.calories,
         carbohydrates: data.carbohydrates,
         protein: data.protein,
-        fats: data.calories,
+        fats: data.fats,
         fiber: data.fiber,
       })
     }
@@ -141,7 +142,7 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
   const handleSave = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     resetFeedback();
-
+    handleRefreshNutritional()
     if (!title.trim()) {
       setFormError("Add a title so others know what the dish is called.");
       return;
@@ -167,16 +168,23 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
       return;
     }
 
+
     const payload: EditableRecipePayload = {
       id,
       title: title.trim(),
       description: description.trim(),
       tags: selectedTags,
       ingredients: filledIngredients,
-      steps: filledSteps,
+      instructions: filledSteps,
+      original_prompt:'Beer',
       nutrition,
     };
 
+    const res = await updateRecipe(payload)
+    if(res.status >=200 && res.status<=300){
+      console.log('success')
+    }
+    
     if (onSubmit) {
       try {
         setIsSaving(true);
@@ -204,41 +212,31 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
       setIsSubmitting(true);
       setErrorMessage(null);
   
-      try {  
-          //TODO Api stuff
-          // Mocked response for demonstration purposes
-          await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate network delay
-          const ingredients = [
-            "200g spaghetti",
-            "1 cup mushrooms, sliced",
-            "2 cups fresh spinach",
-            "1/2 cup heavy cream",
-            "1/4 cup grated Parmesan cheese",
-            "2 cloves garlic, minced",
-            "2 tbsp olive oil",
-            "Salt and pepper to taste"
-          ];
-          const steps = [
-            "Cook the spaghetti according to package instructions. Drain and set aside.",
-            "In a large skillet, heat olive oil over medium heat. Add minced garlic and sauté until fragrant.",
-            "Add sliced mushrooms to the skillet and cook until they release their moisture and become tender.",
-            "Stir in the fresh spinach and cook until wilted.",
-            "Pour in the heavy cream and bring to a simmer. Let it cook for a few minutes until slightly thickened.",
-            "Add the cooked spaghetti to the skillet and toss to combine with the sauce.",
-            "Stir in grated Parmesan cheese and season with salt and pepper to taste.",
-            "Serve hot, garnished with extra Parmesan if desired."
-          ];
-          const nutrition = {
-            protein: "18g",
-            carbohydrates: "62g",
-            fiber: "7g",
-            fats: "15g",
-            calories: "480 kcal",
-          }
+      try {
+        const payload = {
+          recipe: {
+            prompt: originalPrompt,
+            title: title.trim(),
+            ingredients: filledIngredients, 
+            steps: filledSteps,             
+            nutrients: nutrition            
+          },
+          prompt: prompt.trim()             
+        };
+        const res = await api.post('ai/edit', payload)
+        if(res.status>=200 && res.status<=300){
+          const data = await res.data;
+          const ingredients = Array.isArray(data?.ingredients) ? data.ingredients : [];
+          const nutrition = data?.nutrients
+          const steps = Array.isArray(data?.steps) ? data.steps : [];
+          const prompt = typeof data?.prompt === "string" && data.prompt.trim() !== ""
+          ? data.prompt : ingredients.join(", ");
 
-          setIngredients(ingredients.map(i=>({ id: makeId(), value: i })));
-          setSteps(steps.map(i=>({ id: makeId(), value: i })));
+          setIngredients((ingredients as string[]).map(i=>({ id: makeId(), value: i })))
+          setSteps((steps as string[]).map(i=>({ id: makeId(), value: i })))
           setNutrition(nutrition)
+          setOriginalPrompt(prompt)
+        }
 
       } catch (error: unknown) {
         if(error instanceof Error){

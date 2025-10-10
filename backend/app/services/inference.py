@@ -52,7 +52,7 @@ def ai_edit(recipe: Dict, prompt:str):
         }
 
         for ingredient in recipe['ingredients']:
-            ing_list.append(ingredient['name'])
+            ing_list.append(ingredient)
         recipe['ingredients'] = ing_list
         prompt_dict['original_recipe'] = recipe
 
@@ -64,7 +64,8 @@ def ai_edit(recipe: Dict, prompt:str):
         )
         return parse_output(response.output_text)
     except Exception as e:
-        return e
+        print(e)
+        raise e
 
     
 

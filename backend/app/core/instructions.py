@@ -97,7 +97,7 @@ Behavior rules:
   * Renaming the recipe title
   * Adjusting for dietary restrictions (e.g., vegetarian, gluten-free, dairy-free)
 - Preserve as much of the original recipe as possible, only changing what the user requests.
-- "prompt" must stay consistent with the new edited recipe.
+- "prompt" must stay consistent with the new edited recipe and describe the recipe.
 - "ingredients" must remain a cookbook-style array of strings; update only where required.
 - "ingredients" must be simple and cookbook-style: use clear units like "1 cup", "2 tbsp", "200g", etc when possible.
 - Ingredients must always follow this format:
@@ -144,7 +144,7 @@ edit_json_schema = {
 edit_user_request = "Make this recipe vegetarian by replacing chicken with tofu."
 
 original_recipe = {
-  "prompt": ["chicken", "healthy", "quinoa", "easy"],
+  "prompt": "A healthy chicken and quinoa bowl breakfast with seasonings",
   "title": "Family Friendly Chicken & Quinoa Bowl",
   "ingredients": [
     "200g chicken breast",
@@ -171,7 +171,7 @@ edit_user_request=f'''{{
 '''
 
 edited_response = '''{
-  "prompt": ["tofu", "healthy", "quinoa", "easy", "vegetarian"],
+  "prompt": "A vegeterian quinoa bowl and tofu for breakfast with seasonings",
   "title": "Family Friendly Tofu & Quinoa Bowl",
   "ingredients": [
     "200g firm tofu, cubed",

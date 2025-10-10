@@ -17,7 +17,7 @@ async def generate_ai(request: GenerateRequest):
             raise HTTPException(status_code=429, detail="Rate Limited")
         raise HTTPException(status_code=400, detail=recipe['error'])
 
-    return(RecipeCreationBase(prompt=recipe['prompt'], 
+    return(RecipeCreationBase(prompt=str(recipe['prompt']), 
                               ingredients=recipe['ingredients'],
                               steps=recipe['method'],
                               nutrients=recipe['nutrients']))
@@ -25,13 +25,14 @@ async def generate_ai(request: GenerateRequest):
 @router.post('/edit', response_model=RecipeEditResponse,
                 responses={400: {"model": ErrorResponse}}
             )
-async def edit(prompt: RecipeEditRequest):
-    recipe = await ai_edit(prompt.recipe, prompt.prompt)
+async def edit(request: RecipeEditRequest):
+    recipe = ai_edit(request.recipe.model_dump(), request.prompt)
+    if 'error' in recipe.keys():
+        if recipe['error'] == 'rate limited':
+            raise HTTPException(status_code=429, detail="Rate Limited")
+        raise HTTPException(status_code=400, detail=recipe['error'])
 
-    if type(recipe) == Exception :
-        raise HTTPException(status_code=400, detail=str(recipe))
-
-    return(RecipeEditResponse(title=prompt.title,prompt=recipe['prompt'],
+    return(RecipeEditResponse(title=request.recipe.title,prompt=recipe['prompt'],
                               ingredients=recipe['ingredients'],
                               nutrients=recipe['nutrients'],
                               steps=recipe['method']))

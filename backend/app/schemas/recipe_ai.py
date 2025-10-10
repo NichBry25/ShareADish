@@ -8,7 +8,7 @@ class RecipeCreationBase(BaseModel):
     '''
     Base model for receiving recipe from AI/generate
     '''
-    prompt:List[str]
+    prompt:str
     ingredients:List[str]
     nutrients:Nutrients
     steps:List[str]

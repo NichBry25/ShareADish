@@ -108,7 +108,7 @@ async def comment_recipe(recipe_id: str, content: str = Form(...), image: Option
 
 @router.delete("/comment/{recipe_id}/{comment_id}")
 async def delete_comment(recipe_id: str, comment_id: str, user: dict = Depends(get_current_user)):
-    recipe = await recipe_db.find_one({"_id": recipe_id})
+    recipe = recipe_db.find_one({"_id": recipe_id})
 
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
@@ -133,7 +133,7 @@ async def delete_comment(recipe_id: str, comment_id: str, user: dict = Depends(g
 
 @router.delete("/{recipe_id}")
 async def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
-    recipe = await recipe_db.find_one({"_id": recipe_id})
+    recipe = recipe_db.find_one({"_id": recipe_id})
 
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
@@ -143,3 +143,11 @@ async def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
 
     recipe_db.delete_one({"_id": recipe_id})
     return {"message": "Recipe deleted successfully"}
+
+@router.put('/{recipe_id}')
+async def update(recipe_id: str,recipe:RecipeCreate, user: dict = Depends(get_current_user)):
+    recipe_a = recipe_db.find_one({"_id": recipe_id})
+    if recipe_a["created_by"] != user["username"]:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this recipe")
+    recipe_db.update_one({'_id':recipe_id},{'$set':recipe.model_dump()})
+    return {"message": "Recipe edited successfully"}

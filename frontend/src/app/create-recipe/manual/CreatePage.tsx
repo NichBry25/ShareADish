@@ -103,7 +103,7 @@ export default function CreateRecipeManual() {
   const handleSave = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     resetFeedback();
-
+    handleRefreshNutritional()
     if (!title.trim()) {
       setFormError("Add a title so others know what the dish is called.");
       return;
@@ -130,6 +130,7 @@ export default function CreateRecipeManual() {
     }
 
     try{
+        
         const response = await api.post("/recipe/",{ 
           title: title, 
           original_prompt: filledIngredients.join(', '), 
@@ -157,7 +158,6 @@ export default function CreateRecipeManual() {
   };
 
   const handleRefreshNutritional = async () => {
-    console.log(ingredients.map(item=>item.value))
     const res = await api.post('/nutrition', {ingredients:ingredients.map(item=>item.value)})
     if(res.status >= 200 && res.status <= 300){
       const data = res.data
@@ -165,7 +165,7 @@ export default function CreateRecipeManual() {
         calories: data.calories,
         carbohydrates: data.carbohydrates,
         protein: data.protein,
-        fats: data.calories,
+        fats: data.fats,
         fiber: data.fiber,
       })
     }
