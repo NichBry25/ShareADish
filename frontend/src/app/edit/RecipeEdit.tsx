@@ -5,6 +5,7 @@ import { MouseEvent, useMemo, useState } from "react";
 import BackButton from "@/components/interactables/BackButton";
 import { HeaderLayout } from "@/components/layouts/HeaderLayout";
 import CreateRecipeManualLoading from "@/components/layouts/loadings/CreateRecipeManualLoading";
+import api from "@/lib/axios"
 
 type ListItem = {
   id: string;
@@ -65,7 +66,7 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
 
-  const tagOptions = Array.from({ length: 10 }, (_, i) => `Tag ${i + 1}`);
+  const tagOptions = ['Summer', 'Breakfast', 'Lunch', 'Dinner', 'Quick', 'Vegan', 'Vegetarian', 'Protein-Heavy', 'Dessert', 'Healthy']
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
@@ -101,15 +102,18 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
     );
   };
 
-  const handleRefreshNutritional = () => {
-    // TODO API Stuff
-    setNutrition({
-      calories: "100g",
-      carbohydrates: "100g",
-      protein: "100g",
-      fats: "100g",
-      fiber: "100g",
-    })
+  const handleRefreshNutritional = async () => {
+    const res = await api.post('/nutrition', nutrition)
+    if(res.status >= 200 && res.status <= 300){
+      const data = res.data
+      setNutrition({
+        calories: data.calories,
+        carbohydrates: data.carbohydrates,
+        protein: data.protein,
+        fats: data.calories,
+        fiber: data.fiber,
+      })
+    }
   }
   
   const handleRemoveIngredient = (id: string) => {

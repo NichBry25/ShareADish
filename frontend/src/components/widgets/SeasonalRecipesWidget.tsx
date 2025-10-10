@@ -4,10 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 import { StarRating } from "@/components/widgets/StarRating";
-import { seasonalRecipes } from "@/data/recipes";
+import { getSeasonalRecipes } from "@/data/recipes";
+import { placeholder } from "@/data/recipes";
 
 export function SeasonalRecipesWidget() {
-  const recipes = useMemo(() => seasonalRecipes, []);
+  const recipes = getSeasonalRecipes()
 
   return (
     <section className="rounded-3xl bg-white p-6 shadow-sm">
@@ -24,7 +25,7 @@ export function SeasonalRecipesWidget() {
           >
             <div className="relative aspect-[4/3] w-full">
               <Image
-                src={recipe.image}
+                src={placeholder} // TODO - fix this, use images from comments
                 alt={recipe.title}
                 fill
                 sizes="(min-width: 1024px) 18rem, (min-width: 640px) 50vw, 100vw"

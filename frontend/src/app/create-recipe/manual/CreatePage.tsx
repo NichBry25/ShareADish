@@ -5,17 +5,22 @@ import { MouseEvent, useMemo, useState } from "react";
 import BackButton from "@/components/interactables/BackButton";
 import { HeaderLayout } from "@/components/layouts/HeaderLayout";
 import CreateRecipeManualLoading from "@/components/layouts/loadings/CreateRecipeManualLoading";
+import api from '@/lib/axios'
+import { uploadRecipe } from "@/data/recipes";
+import { useRouter } from 'next/navigation'
 
 type ListItem = {
   id: string;
   value: string;
 };
 
-type NutritionItem = {
-  id: string;
-  label: string;
-  amount: string;
-};
+type Nutrition = {
+    calories: string;
+    carbohydrates: string;
+    protein: string;
+    fats: string;
+    fiber: string;
+} 
 
 const instructionsCopy =
   "Start with the essentials - ingredients, steps, and nutrition details - to build your recipe from scratch.";
@@ -23,20 +28,22 @@ const instructionsCopy =
 const makeId = () => Math.random().toString(36).slice(2, 10);
 
 export default function CreateRecipeManual() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]); 
   const [ingredients, setIngredients] = useState<ListItem[]>([{ id: makeId(), value: "" }]);
   const [steps, setSteps] = useState<ListItem[]>([{ id: makeId(), value: "" }]);
-  const [nutrition, setNutrition] = useState<NutritionItem[]>([
-    { id: makeId(), label: "", amount: "" },
-  ]);
+  const [nutrition, setNutrition] = useState<Nutrition>(
+    { calories: "", carbohydrates: "", protein: "", fats: "", fiber: "" },
+  );
 
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const tagOptions = Array.from({ length: 10 }, (_, i) => `Tag ${i + 1}`);
+  const tagOptions = ['Summer', 'Breakfast', 'Lunch', 'Dinner', 'Quick', 'Vegan', 'Vegetarian', 'Protein-Heavy', 'Dessert', 'Healthy']
+
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
@@ -51,12 +58,6 @@ export default function CreateRecipeManual() {
   const filledSteps = useMemo(
     () => steps.map((item) => item.value.trim()).filter(Boolean),
     [steps],
-  );
-
-  const filledNutrition = useMemo(
-    () =>
-      nutrition.filter((item) => item.label.trim() && item.amount.trim()),
-    [nutrition],
   );
 
   const resetFeedback = () => {
@@ -98,31 +99,8 @@ export default function CreateRecipeManual() {
     setSteps((current) => current.filter((item) => item.id !== id));
   };
 
-  const handleAddNutrition = () => {
-    resetFeedback();
-    setNutrition((current) => [...current, { id: makeId(), label: "", amount: "" }]);
-  };
 
-  const handleNutritionChange = (id: string, field: "label" | "amount", value: string) => {
-    resetFeedback();
-    setNutrition((current) =>
-      current.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              [field]: value,
-            }
-          : item,
-      ),
-    );
-  };
-
-  const handleRemoveNutrition = (id: string) => {
-    resetFeedback();
-    setNutrition((current) => current.filter((item) => item.id !== id));
-  };
-
-  const handleSave = (event: MouseEvent<HTMLButtonElement>) => {
+  const handleSave = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     resetFeedback();
 
@@ -151,13 +129,47 @@ export default function CreateRecipeManual() {
       return;
     }
 
-    if (!filledNutrition.length) {
-      setFormError("Provide at least one nutritional detail.");
-      return;
+    try{
+        const response = await api.post("/recipe/",{ 
+          title: title, 
+          original_prompt: filledIngredients.join(', '), 
+          description: description, 
+          ingredients: filledIngredients,
+          nutrition: nutrition,
+          instructions: filledSteps,
+        })
+        if(response.status >= 200 && response.status <=300){
+          const res = await api.get(`/recipe/${response.data.id}`); 
+          if(res.status >=200 && res.status <= 300){
+            let new_recipe = res.data
+            new_recipe.sections = ["feed"]
+            uploadRecipe(new_recipe)
+            router.replace(`/view-recipe/${response.data.id}`);
+          }
+        }
+      }
+
+     catch(error){
+      console.log(error)
     }
     
     setSaveFeedback("All recipe details look great. You're ready to publish!");
   };
+
+  const handleRefreshNutritional = async () => {
+    console.log(ingredients.map(item=>item.value))
+    const res = await api.post('/nutrition', {ingredients:ingredients.map(item=>item.value)})
+    if(res.status >= 200 && res.status <= 300){
+      const data = res.data
+      setNutrition({
+        calories: data.calories,
+        carbohydrates: data.carbohydrates,
+        protein: data.protein,
+        fats: data.calories,
+        fiber: data.fiber,
+      })
+    }
+  }
 
   if (isLoading){
     return <CreateRecipeManualLoading />
@@ -334,45 +346,26 @@ export default function CreateRecipeManual() {
                 <h2 className="text-lg font-semibold text-neutral-900">Nutritional Value</h2>
                 <button
                   type="button"
-                  onClick={handleAddNutrition}
+                  onClick={handleRefreshNutritional}
                   className="text-sm font-semibold text-[#344f1f] transition hover:text-[#2a3e19]"
                 >
-                  + Add nutrition
+                  ⟳ Refresh
                 </button>
               </div>
               <p className="mt-1 text-sm text-neutral-600">
-                Note details like calories, protein, or other nutritional facts per serving.
+                Nutrition will show up here once fetched
               </p>
 
               <div className="mt-4 space-y-3">
-                {nutrition.map((item) => (
-                  <div
-                    key={item.id}
-                    className="grid gap-3 sm:grid-cols-[1.5fr_1fr_auto]"
-                  >
-                    <input
-                      type="text"
-                      value={item.label}
-                      onChange={(event) => handleNutritionChange(item.id, "label", event.target.value)}
-                      placeholder="Label (e.g. Calories)"
-                      className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm text-neutral-800 outline-none transition focus:border-[#344f1f] focus:bg-white"
-                    />
-                    <input
-                      type="text"
-                      value={item.amount}
-                      onChange={(event) => handleNutritionChange(item.id, "amount", event.target.value)}
-                      placeholder="Amount (e.g. 320 kcal)"
-                      className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm text-neutral-800 outline-none transition focus:border-[#344f1f] focus:bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveNutrition(item.id)}
-                      className="justify-self-start rounded-md border border-neutral-200 px-2 py-2 text-xs font-medium text-neutral-500 transition hover:border-red-200 hover:text-red-500"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
+                {                  
+                  <ul className="mt-4 space-y-2 text-sm text-neutral-700">
+                    <li><span className="font-semibold">Protein:</span> {nutrition.protein}</li>
+                    <li><span className="font-semibold">Carbohydrates:</span> {nutrition.carbohydrates}</li>
+                    <li><span className="font-semibold">Fiber:</span> {nutrition.fiber}</li>
+                    <li><span className="font-semibold">Fat:</span> {nutrition.fats}</li>
+                    <li><span className="font-semibold">Calories:</span> {nutrition.calories}</li>
+                  </ul>
+                }
               </div>
             </div>
           </section>

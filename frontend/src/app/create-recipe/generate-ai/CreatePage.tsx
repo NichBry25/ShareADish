@@ -6,6 +6,8 @@ import BackButton from "@/components/interactables/BackButton";
 import api from "@/lib/axios"
 import CreateRecipeAILoading from "@/components/layouts/loadings/CreateRecipeAILoading";
 import { useUsername } from "@/app/context/UsernameContext";
+import { useRouter } from 'next/navigation'
+import { uploadRecipe } from "@/data/recipes";
 
 type GeneratedRecipe = {
   ingredients: string[];
@@ -26,6 +28,7 @@ const initialInstructions =
   "Describe what you are craving, dietary preferences, cooking method, or any ingredients you'd like to feature.";
 
 export default function CreateRecipeAI({token}:CreatePageProp) {
+  const router = useRouter();
   const { username } = useUsername()
   const [isLoading, setIsLoading] = useState(true);
   const [prompt, setPrompt] = useState("");
@@ -37,7 +40,7 @@ export default function CreateRecipeAI({token}:CreatePageProp) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
 
-  const tagOptions = Array.from({ length: 10}, (_, i) => `Tag ${i + 1}`);
+  const tagOptions = ['Summer', 'Breakfast', 'Lunch', 'Dinner', 'Quick', 'Vegan', 'Vegetarian', 'Protein-Heavy', 'Dessert', 'Healthy']
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
@@ -151,8 +154,16 @@ export default function CreateRecipeAI({token}:CreatePageProp) {
           nutrition: generatedRecipe?.nutrition,
           instructions: generatedRecipe?.steps,
         })
+        if(response.status >= 200 && response.status <=300){
+          const res = await api.get(`/recipe/${response.data.id}`); 
+          if(res.status >=200 && res.status <= 300){
+            let new_recipe = res.data
+            new_recipe.sections = ["feed"]
+            uploadRecipe(new_recipe)
+            router.replace(`/view-recipe/${response.data.id}`);
+          }
+        }
       }
-      // TODO Get id to do smth
 
      catch(error){
       console.log(error)

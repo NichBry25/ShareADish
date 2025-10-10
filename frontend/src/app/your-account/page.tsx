@@ -5,7 +5,7 @@ import { AUTH_COOKIE_NAME } from "@/lib/auth/constants";
 import { requireAuth } from "@/lib/auth/requireAuth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { userRecipes } from "@/data/userRecipes";
+// import { userRecipes } from "@/data/userRecipes";
 import api from "@/lib/axios";
 export default async function page() {
     await requireAuth();
@@ -17,7 +17,6 @@ export default async function page() {
     }
     const username=""
     try{
-        
         const res = await api.get('/user/me')
         if(res.status>=200 && res.status <=300){
             const data = res.data
@@ -55,7 +54,7 @@ export default async function page() {
                     </dl>
                 </section>
 
-                <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+                {/* <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold text-neutral-900">Your Recipes</h2>
                         <span className="text-sm text-neutral-500">{userRecipes.length} recipes</span>
@@ -93,7 +92,7 @@ export default async function page() {
                             </article>
                         ))}
                     </div>
-                </section>
+                </section> */}
             </div>
         </main>
     );

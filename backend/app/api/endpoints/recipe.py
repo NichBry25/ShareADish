@@ -1,5 +1,5 @@
 from io import BytesIO
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
 from ...services import get_current_user
 from ...schemas import RecipeCreate,ErrorResponse, RecipeDB, RecipeList, RecipeSearch, CommentCreate, CommentResponse, Comment
 from ...database import recipe_db
@@ -19,7 +19,7 @@ async def return_all_recipe(limit: int = 10):
     """
     recipes = [
         RecipeDB.model_validate(recipe).model_dump(by_alias=True)
-        for recipe in await recipe_db.find().limit(limit)
+        for recipe in recipe_db.find().limit(limit)
     ]
     return {"recipes": recipes}
 
@@ -59,13 +59,13 @@ async def search_recipes(payload: RecipeSearch):
     return RecipeList(recipes=recipes)
 
 @router.put("/rate/{recipe_id}")
-async def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_current_user)):
-    recipe = await recipe_db.find_one({"_id": recipe_id})
+async def like_recipe(recipe_id: str, rating:int = Query(..., ge=1, le=5), user: dict = Depends(get_current_user)):
+    recipe = recipe_db.find_one({"_id": recipe_id})
     
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    
-    if user["username"] in recipe.get("rated_by", []):
+
+    if any(r["username"] == user["username"] for r in recipe.get("rated_by", [])):
         raise HTTPException(status_code=400, detail="User has already rated this recipe")
     
     if rating < 1 or rating > 5:
@@ -84,7 +84,7 @@ async def like_recipe(recipe_id: str, rating:int, user: dict = Depends(get_curre
 
 @router.put("/comment/{recipe_id}")
 async def comment_recipe(recipe_id: str, content: str = Form(...), image: Optional[UploadFile] = File(None), user: dict = Depends(get_current_user)):
-    recipe = await recipe_db.find_one({"_id": recipe_id})
+    recipe = recipe_db.find_one({"_id": recipe_id})
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 

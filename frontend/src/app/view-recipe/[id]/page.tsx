@@ -1,5 +1,6 @@
 "use client";
 
+import api from "@/lib/axios";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -11,9 +12,10 @@ import SearchField from "@/components/interactables/SearchField";
 import { HeaderLayout } from "@/components/layouts/HeaderLayout";
 import RecipeDetailLoading from "@/components/layouts/loadings/RecipeDetailLoading";
 import { StarRating } from "@/components/widgets/StarRating";
-import { RecipeDetail, getRecipeById } from "@/data/recipes";
+import { RecipeDetail, getRecipeById, placeholder } from "@/data/recipes";
 import { getRecipeAuthor } from "@/data/recipeAuthors";
 import { useAuth } from "@/app/context/AuthContext";
+import { setRecipes } from "@/data/recipes";
 
 export default function RecipeDetailPage() {
   const params = useParams<{ id: string }>();
@@ -32,6 +34,23 @@ export default function RecipeDetailPage() {
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
   const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
 
+  
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const response = await api.get('/recipe/')
+        setRecipes(response.data.recipes)
+        
+      } catch (err){
+        console.error('Failed to fetch recipes:', err)
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchRecipes();
+  }, []);
+
   useEffect(() => {
     if (!activeId) {
       setRecipe(null);
@@ -49,11 +68,9 @@ export default function RecipeDetailPage() {
     return () => clearTimeout(timer);
   }, [activeId]);
 
+
   const pageTitle = recipe?.title ?? "Loading recipe";
-  const authorInfo = useMemo(() => {
-    if (!activeId) return undefined;
-    return getRecipeAuthor(recipe?.id ?? activeId);
-  }, [activeId, recipe]);
+  const authorInfo = recipe?.created_by ?? 'Unknown'
   const isAuthenticated = Boolean(token);
   const interactionsDisabled = !isAuthenticated || authLoading;
   const authGuardMessage = !isAuthenticated
@@ -65,7 +82,7 @@ export default function RecipeDetailPage() {
   const simulateNetworkDelay = (duration = 600) =>
     new Promise((resolve) => {
       setTimeout(resolve, duration);
-    });
+    });  
 
   const triggerReload = () => {
     if (typeof window !== "undefined") {
@@ -80,7 +97,15 @@ export default function RecipeDetailPage() {
     }
     setIsCommentSubmitting(true);
     try {
-      await simulateNetworkDelay();
+      const formData = new FormData();
+      formData.append("content", commentValue);
+      console.log(`Submitting comment "${commentValue}" for recipe ${activeId}`);
+      const request = await api.put("recipe/comment/" + activeId, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      console.log("Comment submitted:", request.data);
     } finally {
       setIsCommentSubmitting(false);
       setCommentValue("");
@@ -95,12 +120,27 @@ export default function RecipeDetailPage() {
     }
     setIsRatingSubmitting(true);
     try {
-      await simulateNetworkDelay();
+      console.log(`Submitting rating ${ratingValue} for recipe ${activeId}`);
+      await api.put(`/recipe/rate/${activeId}?rating=${ratingValue}`);
+      alert("Rating submitted! Thank you for your feedback.");
+    } catch (error: any) {
+      if (error.response && error.response.status === 400) {
+        const message = error.response.data?.detail;
+        alert(`Error: ${message}`);
+      }
     } finally {
       setIsRatingSubmitting(false);
       setRatingValue("");
       triggerReload();
     }
+  }
+  let image = placeholder
+  if(recipe != null && recipe.comments.length > 0 ){
+    recipe.comments.forEach(comment=>{
+      if(comment.image_url){
+        let image = comment.image_url
+      }
+    })
   }
 
   return (
@@ -132,7 +172,7 @@ export default function RecipeDetailPage() {
                 <div className="flex flex-col gap-1 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-900 sm:flex-row sm:items-center sm:gap-3">
                   <span className="font-semibold uppercase tracking-wide">Created by</span>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{authorInfo.handle}</span>
+                    <span className="font-medium">{authorInfo}</span>
                   </div>
                 </div>
               ) : null}
@@ -162,7 +202,7 @@ export default function RecipeDetailPage() {
 
             <div className="relative h-72 w-full overflow-hidden rounded-3xl border border-zinc-100 bg-white sm:h-80">
               <Image
-                src={recipe.image}
+                src={image}
                 alt={recipe.title}
                 fill
                 sizes="(min-width: 1280px) 960px, (min-width: 768px) 80vw, 100vw"
@@ -172,6 +212,7 @@ export default function RecipeDetailPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
+              {/* Ingredients */}
               <section className="space-y-4 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <h2 className="text-base font-semibold uppercase tracking-wide text-zinc-900">Ingredients</h2>
@@ -186,6 +227,8 @@ export default function RecipeDetailPage() {
                   ))}
                 </ul>
               </section>
+
+              {/* Instructions */}
               <section className="space-y-4 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <h2 className="text-base font-semibold uppercase tracking-wide text-zinc-900">Instructions</h2>
@@ -202,15 +245,51 @@ export default function RecipeDetailPage() {
                   ))}
                 </ol>
               </section>
+
+              {/* Nutrition Facts */}
+              <section className="space-y-4 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm lg:col-span-2">
+                <h2 className="text-base font-semibold uppercase tracking-wide text-zinc-900">Nutritional Information</h2>
+                <ul className="grid grid-cols-2 gap-4 text-sm text-zinc-600 sm:grid-cols-5">
+                  <li className="flex flex-col items-center rounded-lg bg-zinc-50 p-3">
+                    <span className="text-lg font-semibold text-zinc-900">{recipe.nutrition.calories || "-"}</span>
+                    <span className="text-xs uppercase tracking-wide text-zinc-500">Calories</span>
+                  </li>
+                  <li className="flex flex-col items-center rounded-lg bg-zinc-50 p-3">
+                    <span className="text-lg font-semibold text-zinc-900">{recipe.nutrition.protein || "-"}</span>
+                    <span className="text-xs uppercase tracking-wide text-zinc-500">Protein</span>
+                  </li>
+                  <li className="flex flex-col items-center rounded-lg bg-zinc-50 p-3">
+                    <span className="text-lg font-semibold text-zinc-900">{recipe.nutrition.carbohydrates || "-"}</span>
+                    <span className="text-xs uppercase tracking-wide text-zinc-500">Carbs</span>
+                  </li>
+                  <li className="flex flex-col items-center rounded-lg bg-zinc-50 p-3">
+                    <span className="text-lg font-semibold text-zinc-900">{recipe.nutrition.fats || "-"}</span>
+                    <span className="text-xs uppercase tracking-wide text-zinc-500">Fats</span>
+                  </li>
+                  <li className="flex flex-col items-center rounded-lg bg-zinc-50 p-3">
+                    <span className="text-lg font-semibold text-zinc-900">{recipe.nutrition.fiber || "-"}</span>
+                    <span className="text-xs uppercase tracking-wide text-zinc-500">Fiber</span>
+                  </li>
+                </ul>
+              </section>
             </div>
 
             <section className="space-y-4 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm">
               <h2 className="text-base font-semibold uppercase tracking-wide text-zinc-900">Comments</h2>
-              {recipe.comments.length ? (
+              {recipe.comments.length > 0 ? (
                 <ul className="space-y-3 text-sm text-zinc-600">
-                  {recipe.comments.map((comment) => (
-                    <li key={comment} className="rounded-2xl bg-zinc-50 px-4 py-3">
-                      {comment}
+                  {recipe.comments.map((comment, index) => (
+                    <li
+                      key={comment.id ?? index}
+                      className="rounded-2xl bg-zinc-50 px-4 py-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-zinc-800">{comment.username}</span>
+                        <span className="text-xs text-zinc-400">
+                          {new Date(comment.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-zinc-700">{comment.content}</p>
                     </li>
                   ))}
                 </ul>

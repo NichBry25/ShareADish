@@ -16,4 +16,4 @@ async def get_nutrients(ingredients: NutrientsRequest):
                      carbohydrates=nutrients['carbohydrates'],
                      fiber=nutrients['fiber'],
                      calories=nutrients['calories'],
-                     fats=nutrients['fat']))
+                     fats=nutrients['fats']))

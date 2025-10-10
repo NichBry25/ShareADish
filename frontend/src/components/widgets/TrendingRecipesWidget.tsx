@@ -4,10 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 import { StarRating } from "@/components/widgets/StarRating";
-import { trendingRecipes } from "@/data/recipes";
+import { getTrendingRecipes } from "@/data/recipes";
+import { placeholder } from "@/data/recipes";
 
 export function TrendingRecipesWidget() {
-  const recipes = useMemo(() => trendingRecipes, []);
+  const recipes = getTrendingRecipes()
 
   return (
     <section className="rounded-3xl bg-white p-6 shadow-sm">
@@ -15,7 +16,8 @@ export function TrendingRecipesWidget() {
         <h2 className="text-lg font-semibold text-zinc-900">Today's Trending Recipes</h2>
       </header>
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {recipes.map((recipe) => (
+        {
+        recipes.map((recipe) => (
           <Link
             key={recipe.id}
             href={`/view-recipe/${recipe.id}`}
@@ -23,7 +25,7 @@ export function TrendingRecipesWidget() {
           >
             <div className="relative aspect-[4/3] w-full">
               <Image
-                src={recipe.image}
+                src={placeholder} // TODO - fix this, use images from comments
                 alt={recipe.title}
                 fill
                 sizes="(min-width: 1024px) 18rem, (min-width: 640px) 50vw, 100vw"

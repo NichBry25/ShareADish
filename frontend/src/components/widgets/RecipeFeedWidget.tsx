@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo } from "react";
 import { StarRating } from "@/components/widgets/StarRating";
-import { feedRecipes } from "@/data/recipes";
-import { getRecipeAuthor } from "@/data/recipeAuthors";
+import { getFeedRecipes } from "@/data/recipes";
+import { placeholder } from "@/data/recipes";
+
+
 
 export function RecipeFeedWidget() {
-  const feed = useMemo(() => feedRecipes, []);
+  const feed = getFeedRecipes()
 
   return (
     <section className="rounded-3xl bg-white p-6 shadow-sm">
@@ -18,7 +19,7 @@ export function RecipeFeedWidget() {
       <div className="mt-6 h-[550px] overflow-hidden rounded-2xl border border-zinc-100">
         <ul className="flex h-full snap-y snap-mandatory flex-col overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {feed.map((item) => {
-            const author = getRecipeAuthor(item.id);
+            const author = item.created_by;
             return (
             <li
               key={item.id}
@@ -30,7 +31,7 @@ export function RecipeFeedWidget() {
               >
                 <div className="relative h-36 w-full overflow-hidden rounded-2xl sm:h-32 sm:w-36 lg:h-36 lg:w-40">
                   <Image
-                    src={item.image}
+                    src={placeholder} // TODO - fix this, use images from comments
                     alt={item.title}
                     fill
                     sizes="(min-width: 1024px) 160px, (min-width: 640px) 144px, 88vw"
@@ -42,13 +43,12 @@ export function RecipeFeedWidget() {
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-wide text-emerald-500">
-                        {author?.handle ?? "Unknown creator"}
+                        {author ?? "Unknown creator"}
                       </p>
                       <h3 className="text-lg font-semibold text-zinc-900">{item.title}</h3>
                     </div>
                     <StarRating value={item.rating ?? 0} />
                   </div>
-                  <p className="text-sm text-zinc-600">{item.summary}</p>
                   <span className="text-xs font-medium text-zinc-500">
                     {(item.no_rated ?? 0).toLocaleString()} people rated this
                   </span>

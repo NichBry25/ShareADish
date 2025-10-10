@@ -9,7 +9,7 @@ from fastapi import UploadFile
 # --- Comment Models ---
 class Comment(BaseModel):
     content: str
-    image_url: Optional[str]
+    image_url: Optional[str] = ""
 
 class CommentCreate(Comment):
     username: str
@@ -18,9 +18,11 @@ class CommentCreate(Comment):
 
 class CommentResponse(Comment):
     username: str
-    content: str
     created_at: datetime
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+
+class RatingCreate(BaseModel):
+    value: int
 
 class Rating(BaseModel):
     username: str
@@ -34,7 +36,7 @@ class RecipeBase(BaseModel):
     instructions: list[str]
     nutrition: Nutrients
     comments: list[CommentResponse] = []  # fully embedded comments
-    rating: Optional[float] = None
+    rating: Optional[float] = 0.0
     rated_by: Optional[list[Rating]] = []
     no_rated: Optional[int] = 0
     tags: Optional[list[str]] = []
