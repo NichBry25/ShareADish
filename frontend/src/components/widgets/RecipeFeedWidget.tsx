@@ -9,6 +9,7 @@ import { placeholder } from "@/data/recipes";
 
 
 export function RecipeFeedWidget() {
+  
   const feed = getFeedRecipes()
 
   return (

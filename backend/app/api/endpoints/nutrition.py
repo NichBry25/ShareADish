@@ -9,8 +9,8 @@ router = APIRouter(prefix="/nutrition",
 @router.post('/', response_model=Nutrients,
                 responses={400: {"model": ErrorResponse}}
             )
-async def get_nutrients(ingredients: NutrientsRequest):
-    nutrients = match_ingredients(ingredients_list=ingredients.ingredients)
+async def get_nutrients(request: NutrientsRequest):
+    nutrients = match_ingredients(ingredients_list=request.ingredients)
 
     return(Nutrients(protein=nutrients['protein'], 
                      carbohydrates=nutrients['carbohydrates'],

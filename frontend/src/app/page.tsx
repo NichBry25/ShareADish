@@ -14,7 +14,7 @@ import LoadingForMainPage from "@/components/layouts/loadings/MainPageLoading"
 import { setRecipes } from "@/data/recipes";
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecipes = async () => {

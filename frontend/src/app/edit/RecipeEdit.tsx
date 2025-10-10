@@ -7,6 +7,8 @@ import { HeaderLayout } from "@/components/layouts/HeaderLayout";
 import CreateRecipeManualLoading from "@/components/layouts/loadings/CreateRecipeManualLoading";
 import api from "@/lib/axios"
 import { updateRecipe } from "@/lib/updateRecipe";
+import { useRouter } from 'next/navigation'
+
 type ListItem = {
   id: string;
   value: string;
@@ -21,14 +23,14 @@ type Nutrition = {
 } 
 
 type Recipe = {
-  id: string;
+  _id: string;
   title: string;
   description:string;
   tags: string[];
   ingredients: string[];
-  steps: string[];
+  instructions: string[];
   nutrition: Nutrition;
-  prompt: string; // <- TODO, idk how recipe is passed
+  prompt: string;
 };
 type RecipeEditProps = {
   recipe: Recipe;
@@ -50,14 +52,15 @@ export type EditableRecipePayload = {
 
 const makeId = () => Math.random().toString(36).slice(2, 10);
 export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
-  const id = recipe.id
+  const router = useRouter();
+  const id = recipe._id
   const [originalPrompt, setOriginalPrompt] = useState(recipe.prompt)
   const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState(recipe.title);
   const [description, setDescription] = useState(recipe.description);
   const [selectedTags, setSelectedTags] = useState<string[]>(recipe.tags); 
   const [ingredients, setIngredients] = useState<ListItem[]>(recipe.ingredients.map(i=>({ id: makeId(), value: i })));
-  const [steps, setSteps] = useState<ListItem[]>(recipe.steps.map(i=>({ id: makeId(), value: i })));
+  const [steps, setSteps] = useState<ListItem[]>(recipe.instructions.map(i=>({ id: makeId(), value: i })));
   const [nutrition, setNutrition] = useState<Nutrition>(recipe.nutrition);
 
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
@@ -104,7 +107,7 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
   };
 
   const handleRefreshNutritional = async () => {
-    const res = await api.post('/nutrition', filledIngredients)
+    const res = await api.post('/nutrition', {ingredients:filledIngredients})
     if(res.status >= 200 && res.status <= 300){
       const data = res.data
       setNutrition({
@@ -139,10 +142,10 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
     setSteps((current) => current.filter((item) => item.id !== id));
   };
 
-  const handleSave = async (event: MouseEvent<HTMLButtonElement>) => {
+  const handleSave = async (event: MouseEvent<HTMLButtonElement>) => { // TODO Fix recursion error here
     event.preventDefault();
     resetFeedback();
-    handleRefreshNutritional()
+    await handleRefreshNutritional()
     if (!title.trim()) {
       setFormError("Add a title so others know what the dish is called.");
       return;
@@ -183,6 +186,7 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
     const res = await updateRecipe(payload)
     if(res.status >=200 && res.status<=300){
       console.log('success')
+      setSaveFeedback("Recipe saved successfully.");
     }
     
     if (onSubmit) {
@@ -190,6 +194,7 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
         setIsSaving(true);
         await onSubmit(payload);
         setSaveFeedback("Recipe saved successfully.");
+        
       } catch (error) {
         console.error("Recipe save failed", error);
         setFormError("Unable to save changes right now. Please try again.");
@@ -199,6 +204,9 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
     } else {
       setSaveFeedback("All recipe details look great. You're ready to publish!");
     }
+    console.log("Redirecting to /your-account");
+
+    router.replace('/your-account');
   };
 
   const handleGenerate = async (event: FormEvent<HTMLFormElement>) => {

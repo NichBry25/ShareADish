@@ -16,6 +16,7 @@ type Nutrient = {
   calories: string;
 };
 
+
 export type RecipeDetail = {
   id: string;
   title: string;
@@ -34,7 +35,7 @@ export type RecipeDetail = {
   updated_at: Date;
 };
 
-type WithSections = RecipeDetail & {
+export type WithSections = RecipeDetail & {
   sections: Array<"trending" | "seasonal" | "feed">;
 };
 
@@ -132,4 +133,12 @@ export function allRecipeIds() {
 
 export function uploadRecipe(recipe: WithSections) {
   recipeDetails.push(recipe);
+}
+
+export function GetRecipesUserPage(username:string){
+  const userRecipes = getAllRecipes()
+    .filter((recipe) => recipe.created_by === username)
+    .map(({ sections, ...rest }) => rest);
+  console.log(userRecipes)
+  return userRecipes;
 }

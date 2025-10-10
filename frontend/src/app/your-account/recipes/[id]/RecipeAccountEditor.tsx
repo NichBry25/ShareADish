@@ -2,7 +2,24 @@
 
 import { useRouter } from "next/navigation";
 import RecipeEdit, { EditableRecipePayload } from "@/app/edit/RecipeEdit";
-import type { UserRecipe } from "@/data/userRecipes";
+
+
+type UserRecipe = {
+  _id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  ingredients: string[];
+  instructions: string[];
+  nutrition: {
+    calories: string;
+    carbohydrates: string;
+    protein: string;
+    fats: string;
+    fiber: string;
+  };
+  prompt: string;
+};
 
 type RecipeAccountEditorProps = {
   recipe: UserRecipe;
@@ -20,6 +37,8 @@ export default function RecipeAccountEditor({ recipe }: RecipeAccountEditorProps
     router.push(redirectPath);
     router.refresh();
   };
+  console.log("gljkdsngjsoghsh")
+  console.log(recipe)
 
   return <RecipeEdit recipe={recipe} onSubmit={handleSubmit} />;
 }

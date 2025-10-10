@@ -146,6 +146,7 @@ async def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
 
 @router.put('/{recipe_id}')
 async def update(recipe_id: str,recipe:RecipeCreate, user: dict = Depends(get_current_user)):
+    print(recipe_id)
     recipe_a = recipe_db.find_one({"_id": recipe_id})
     if recipe_a["created_by"] != user["username"]:
         raise HTTPException(status_code=403, detail="Not authorized to edit this recipe")
