@@ -35,16 +35,19 @@ class RecipeBase(BaseModel):
     ingredients: list[str]
     instructions: list[str]
     nutrition: Nutrients
-    comments: list[CommentResponse] = []  # fully embedded comments
     rating: Optional[float] = 0.0
     rated_by: Optional[list[Rating]] = []
     no_rated: Optional[int] = 0
     tags: Optional[list[str]] = []
+    comments:list[CommentResponse]=[]
     original_prompt: str
     verified: bool = False
 
 class RecipeCreate(RecipeBase):
     pass
+
+class RecipeUpdate(RecipeBase):
+    id:str
 
 class RecipeDB(RecipeBase):
     created_by: str  # User ID
@@ -62,7 +65,7 @@ class RecipeDB(RecipeBase):
 
 class RecipeSearch(BaseModel):
     query: str
-    tags: Optional[list[str]] = []
+    tag: str
     min_rating: Optional[float] = None
     max_results: Optional[int] = 10
 

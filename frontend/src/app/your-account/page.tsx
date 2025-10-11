@@ -19,6 +19,7 @@ export default async function page() {
         (await cookies()).delete(AUTH_COOKIE_NAME);
         redirect("/login");
     }
+
     let username;
     
     try{

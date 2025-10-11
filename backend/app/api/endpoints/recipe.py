@@ -1,7 +1,7 @@
 from io import BytesIO
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
 from ...services import get_current_user
-from ...schemas import RecipeCreate,ErrorResponse, RecipeDB, RecipeList, RecipeSearch, CommentCreate, CommentResponse, Comment
+from ...schemas import RecipeCreate,RecipeUpdate, ErrorResponse, RecipeDB, RecipeList, RecipeSearch, CommentCreate, CommentResponse, Comment
 from ...database import recipe_db
 from ...services import save_new_recipe
 from ...services.image import upload, delete
@@ -45,13 +45,20 @@ async def get_recipe(recipe_id: str):
 @router.post("/search/")
 async def search_recipes(payload: RecipeSearch):
     search_filter = {}
-    if payload.query:
-        search_filter["title"] = {"$regex": payload.query, "$options": "i"}
-    if payload.tags:
-        search_filter["tags"] = {"$in": payload.tags}
+    if len(payload.query) !=0:
+        words = payload.query.split()
+        search_filter["$and"] = [
+            {"title": {"$regex": word, "$options": "i"}} for word in words
+        ]
+        print('query')
+        print(payload.query)
+    if len(payload.tag) !=0:
+        print('tag')
+        print(payload.tag)
+        search_filter["tags"] = {"$in": [payload.tag]}
     if payload.min_rating is not None:
         search_filter["rating"] = {"$gte": payload.min_rating}
-    cursor = recipe_db.find(search_filter).limit(payload.max_results or 10)
+    cursor = recipe_db.find(search_filter)
     recipes = [
         RecipeDB.model_validate(recipe).model_dump(by_alias=True)
         for recipe in cursor
@@ -150,9 +157,9 @@ async def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
     return {"message": "Recipe deleted successfully"}
 
 @router.put('/{recipe_id}')
-async def update(recipe_id: str,recipe:RecipeCreate, user: dict = Depends(get_current_user)):
+async def update(recipe_id: str,recipe:RecipeUpdate, user: dict = Depends(get_current_user)):
     recipe_a = recipe_db.find_one({"_id": recipe_id})
     if recipe_a["created_by"] != user["username"]:
         raise HTTPException(status_code=403, detail="Not authorized to edit this recipe")
-    recipe_db.update_one({'_id':recipe_id},{'$set':recipe.model_dump()})
+    recipe_db.update_one({'_id':recipe_id},{'$set':recipe.model_dump(by_alias=True)})
     return {"message": "Recipe edited successfully"}

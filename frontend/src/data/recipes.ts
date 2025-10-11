@@ -43,9 +43,6 @@ let recipeDetails: WithSections[] = [];
 
 // SETTER
 export function setRecipes(apiRecipes: any[]) {
-  console.log('api recipe')
-  console.log(apiRecipes);
-
   // 1. Build the full recipe list first without sections
   const mapped = apiRecipes.map((recipe) => ({
     id: recipe._id,
@@ -99,9 +96,6 @@ export function setRecipes(apiRecipes: any[]) {
     if (seasonalIds.includes(r.id)) sections.push("seasonal");
     return { ...r, sections };
   });
-
-  console.log("recipeDetails:");
-  console.log(recipeDetails);
 }
 
 // GETTERS
@@ -141,6 +135,5 @@ export function GetRecipesUserPage(username:string){
   const userRecipes = getAllRecipes()
     .filter((recipe) => recipe.created_by === username)
     .map(({ sections, ...rest }) => rest);
-  console.log(userRecipes)
   return userRecipes;
 }

@@ -4,6 +4,14 @@ import { useRouter } from "next/navigation";
 import RecipeEdit, { EditableRecipePayload } from "@/app/edit/RecipeEdit";
 
 
+type CommentResponse = {
+  id?: string;
+  username: string;
+  content: string;
+  created_at: Date;
+  image_url: string;
+};
+
 type UserRecipe = {
   _id: string;
   title: string;
@@ -18,14 +26,15 @@ type UserRecipe = {
     fats: string;
     fiber: string;
   };
-  prompt: string;
+  comments: CommentResponse[];
+  original_prompt: string;
 };
 
 type RecipeAccountEditorProps = {
   recipe: UserRecipe;
 };
 
-const redirectPath = "/your-account";
+const redirectPath = "/";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -33,16 +42,11 @@ export default function RecipeAccountEditor({ recipe }: RecipeAccountEditorProps
   const router = useRouter();
 
   const handleSubmit = async (payload: EditableRecipePayload) => {
-    await simulateRecipeUpdate(payload);
     router.push(redirectPath);
     router.refresh();
   };
-  console.log("gljkdsngjsoghsh")
+  console.log('recipes/id recipe account edit')
   console.log(recipe)
 
   return <RecipeEdit recipe={recipe} onSubmit={handleSubmit} />;
-}
-
-async function simulateRecipeUpdate(_payload: EditableRecipePayload) {
-  await sleep(400);
 }

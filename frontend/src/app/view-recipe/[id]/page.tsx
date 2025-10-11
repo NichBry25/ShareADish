@@ -312,7 +312,7 @@ export default function RecipeDetailPage() {
                       className="rounded-2xl bg-zinc-50 px-4 py-3"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-zinc-800">{comment.username}</span>
+                        <span className="font-semibold text-zinc-800">{comment.username}</span>
                         <span className="text-xs text-zinc-400 flex items-center gap-2">
                           {
                           <>

@@ -25,8 +25,9 @@ export type EditableRecipePayload = {
 export async function updateRecipe(payload: EditableRecipePayload) {
   const cookieStore = await cookies();
   const token = cookieStore.get('access_token')?.value;
-
-  const res = await api.put(`recipe/${payload.id}`, payload, {
+  console.log('edit')
+  console.log(payload)
+  const res = await api.put(`/recipe/${payload.id}`, payload, {
     headers: {
       Cookie: `access_token=${token}`
     }

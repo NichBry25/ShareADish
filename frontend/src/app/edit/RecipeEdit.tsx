@@ -22,6 +22,14 @@ type Nutrition = {
     fiber: string;
 } 
 
+type CommentResponse = {
+  id?: string;
+  username: string;
+  content: string;
+  created_at: Date;
+  image_url: string;
+};
+
 type Recipe = {
   _id: string;
   title: string;
@@ -30,7 +38,8 @@ type Recipe = {
   ingredients: string[];
   instructions: string[];
   nutrition: Nutrition;
-  prompt: string;
+  original_prompt: string;
+  comments:CommentResponse[];
 };
 type RecipeEditProps = {
   recipe: Recipe;
@@ -48,14 +57,17 @@ export type EditableRecipePayload = {
   instructions: string[];
   nutrition: Nutrition;
   original_prompt: string;
+  comments:CommentResponse[];
 };
 
 const makeId = () => Math.random().toString(36).slice(2, 10);
 export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
+  console.log('recipe edit')
+  console.log(recipe)
   const router = useRouter();
   const id = recipe._id
-  const [originalPrompt, setOriginalPrompt] = useState(recipe.prompt)
-  const [isLoading, setIsLoading] = useState(true);
+  const [originalPrompt, setOriginalPrompt] = useState(recipe.original_prompt)
+  const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState(recipe.title);
   const [description, setDescription] = useState(recipe.description);
   const [selectedTags, setSelectedTags] = useState<string[]>(recipe.tags); 
@@ -72,11 +84,6 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
   const [prompt, setPrompt] = useState("");
 
   const tagOptions = ['Summer', 'Breakfast', 'Lunch', 'Dinner', 'Quick', 'Vegan', 'Vegetarian', 'Protein-Heavy', 'Dessert', 'Healthy']
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
 
   const filledIngredients = useMemo(
     () => ingredients.map((item) => item.value.trim()).filter(Boolean),
@@ -179,15 +186,19 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
       tags: selectedTags,
       ingredients: filledIngredients,
       instructions: filledSteps,
-      original_prompt:'Beer',
+      original_prompt:originalPrompt,
       nutrition,
+      comments:recipe.comments
     };
+    console.log('payload')
+    console.log(payload)
+    const res = await fetch('/api/update-recipe', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-    const res = await updateRecipe(payload)
-    if(res.status >=200 && res.status<=300){
-      console.log('success')
-      setSaveFeedback("Recipe saved successfully.");
-    }
+    if (res.ok) setSaveFeedback("Recipe saved successfully.");
     
     if (onSubmit) {
       try {
@@ -204,9 +215,6 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
     } else {
       setSaveFeedback("All recipe details look great. You're ready to publish!");
     }
-    console.log("Redirecting to /your-account");
-
-    router.replace('/your-account');
   };
 
   const handleGenerate = async (event: FormEvent<HTMLFormElement>) => {

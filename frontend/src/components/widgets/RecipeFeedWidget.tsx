@@ -1,65 +1,55 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { StarRating } from "@/components/widgets/StarRating";
-import { getFeedRecipes } from "@/data/recipes";
-import { placeholder } from "@/data/recipes";
+import Image from "next/image";
+import { getFeedRecipes, type WithSections, placeholder as placeholderImg } from "@/data/recipes";
 import getImage from "@/lib/getRecipeImage";
 
+type Props = {
+  recipes?: WithSections[]; // optional override
+};
 
+export function RecipeFeedWidget({ recipes }: Props) {
+  const list = recipes ?? getFeedRecipes();
 
-export function RecipeFeedWidget() {
-  
-  const feed = getFeedRecipes()
+  if (list.length === 0) {
+    return null;
+  }
 
   return (
-    <section className="rounded-3xl bg-white p-6 shadow-sm">
-      <header className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-zinc-900">Spotlight Feed</h2>
-      </header>
-      <div className="mt-6 h-[550px] overflow-hidden rounded-2xl border border-zinc-100">
-        <ul className="flex h-full snap-y snap-mandatory flex-col overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {feed.map((item) => {
-            const author = item.created_by;
-            return (
-            <li
-              key={item.id}
-              className="flex border-b border-zinc-100 bg-white/90 p-5 last:border-b-0 snap-start"
-            >
-              <Link
-                href={`/view-recipe/${item.id}`}
-                className="flex w-full flex-col gap-4 sm:flex-row sm:items-start"
-              >
-                <div className="relative h-36 w-full overflow-hidden rounded-2xl sm:h-32 sm:w-36 lg:h-36 lg:w-40">
-                  <Image
-                    src={getImage(item)} 
-                    alt={item.title}
-                    fill
-                    sizes="(min-width: 1024px) 160px, (min-width: 640px) 144px, 88vw"
-                    className="object-cover transition hover:scale-[1.02]"
-                    priority={false}
-                  />
-                </div>
-                <div className="flex flex-1 flex-col gap-3">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-emerald-500">
-                        {author ?? "Unknown creator"}
-                      </p>
-                      <h3 className="text-lg font-semibold text-zinc-900">{item.title}</h3>
-                    </div>
-                    <StarRating value={item.rating ?? 0} />
-                  </div>
-                  <span className="text-xs font-medium text-zinc-500">
-                    {(item.no_rated ?? 0).toLocaleString()} people rated this
+    <section>
+      <h2 className="mb-4 text-lg font-semibold text-zinc-900">Feed</h2>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {list.map((r) => (
+          <Link
+            key={r.id}
+            href={`/view-recipe/${encodeURIComponent(r.id)}`}
+            className="group overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm transition hover:shadow"
+          >
+            <div className="relative h-40 w-full">
+              <Image
+                alt={r.title}
+                src={getImage(r)}
+                fill
+                className="object-cover transition group-hover:scale-[1.02]"
+              />
+            </div>
+            <div className="space-y-1 p-4">
+              <h3 className="line-clamp-1 font-medium text-zinc-900">{r.title}</h3>
+              <p className="line-clamp-2 text-sm text-zinc-600">{r.description}</p>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {r.tags.slice(0, 3).map((t) => (
+                  <span
+                    key={`${r.id}-${t}`}
+                    className="rounded-full bg-zinc-900/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-700"
+                  >
+                    {t}
                   </span>
-                </div>
-              </Link>
-            </li>
-            );
-          })}
-        </ul>
+                ))}
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </section>
   );
