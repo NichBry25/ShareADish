@@ -4,7 +4,7 @@ from ...services import get_current_user
 from ...schemas import RecipeCreate,ErrorResponse, RecipeDB, RecipeList, RecipeSearch, CommentCreate, CommentResponse, Comment
 from ...database import recipe_db
 from ...services import save_new_recipe
-from ...services.image import upload 
+from ...services.image import upload, delete
 from typing import Optional
 
 router = APIRouter(prefix="/recipe", tags=["recipe"])
@@ -90,7 +90,7 @@ async def comment_recipe(recipe_id: str, content: str = Form(...), image: Option
 
     url = None
     if image:
-        file_bytes = BytesIO(image.read())
+        file_bytes = BytesIO(await image.read())
         url = await upload(file_bytes)
     
     comment_doc = {
@@ -118,9 +118,14 @@ async def delete_comment(recipe_id: str, comment_id: str, user: dict = Depends(g
         if str(comment["_id"]) == comment_id:
             comment_to_delete = comment
             break
+    
 
     if not comment_to_delete:
         raise HTTPException(status_code=404, detail="Comment not found")
+
+    if comment_to_delete['image_url']:
+        image_id = comment_to_delete['image_url'].split('/')[-1].split('.')[0] # Get the last part of the link and the file name, eg https://cloudinaryurl/smthsmth.jpg -> smthsmth
+        await delete(image_id)
 
     if comment_to_delete["username"] != user["username"]:
         raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
@@ -146,7 +151,6 @@ async def delete_recipe(recipe_id: str, user: dict = Depends(get_current_user)):
 
 @router.put('/{recipe_id}')
 async def update(recipe_id: str,recipe:RecipeCreate, user: dict = Depends(get_current_user)):
-    print(recipe_id)
     recipe_a = recipe_db.find_one({"_id": recipe_id})
     if recipe_a["created_by"] != user["username"]:
         raise HTTPException(status_code=403, detail="Not authorized to edit this recipe")

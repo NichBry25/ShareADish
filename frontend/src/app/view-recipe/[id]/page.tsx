@@ -16,6 +16,9 @@ import { RecipeDetail, getRecipeById, placeholder } from "@/data/recipes";
 import { getRecipeAuthor } from "@/data/recipeAuthors";
 import { useAuth } from "@/app/context/AuthContext";
 import { setRecipes } from "@/data/recipes";
+import CommentDeleteButton from "@/components/widgets/DeleteCommentWidget";
+import getImage from "@/lib/getRecipeImage";
+
 
 export default function RecipeDetailPage() {
   const params = useParams<{ id: string }>();
@@ -26,6 +29,7 @@ export default function RecipeDetailPage() {
     }
     return rawId ?? "";
   }, [params]);
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { token, isLoading: authLoading } = useAuth();
@@ -33,41 +37,51 @@ export default function RecipeDetailPage() {
   const [ratingValue, setRatingValue] = useState<string>("");
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
   const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
-
+  const [username, setUsername] = useState<string | null>(null);
   
   useEffect(() => {
-    const fetchRecipes = async () => {
+    const fetchAndSetRecipe = async () => {
+      if (!activeId) {
+        setRecipe(null);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setRecipe(null);
+
       try {
-        const response = await api.get('/recipe/')
-        setRecipes(response.data.recipes)
-        
-      } catch (err){
-        console.error('Failed to fetch recipes:', err)
+        const response = await api.get("/recipe/");
+        setRecipes(response.data.recipes);
+
+        const fetchedRecipe = getRecipeById(activeId);
+        setRecipe(fetchedRecipe ?? null);
       } finally {
         setIsLoading(false);
       }
-    }
-
-    fetchRecipes();
-  }, []);
-
-  useEffect(() => {
-    if (!activeId) {
-      setRecipe(null);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setRecipe(null);
-    const timer = setTimeout(() => {
-      setRecipe(getRecipeById(activeId) ?? null);
-      setIsLoading(false);
-    }, 350);
-
-    return () => clearTimeout(timer);
+    };
+    fetchAndSetRecipe();
   }, [activeId]);
 
+
+    
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await api.get("/user/me", {
+            headers: { Cookie: `access_token=${token}` },
+        });
+        if (res.status >= 200 && res.status <= 300) {
+          setUsername(res.data.username);
+        }
+      } catch (err) {
+        console.error("Failed to fetch current user:", err);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   const pageTitle = recipe?.title ?? "Loading recipe";
   const authorInfo = recipe?.created_by ?? 'Unknown'
@@ -79,15 +93,16 @@ export default function RecipeDetailPage() {
       : "Please log in to post comments or ratings."
     : undefined;
 
-  const simulateNetworkDelay = (duration = 600) =>
-    new Promise((resolve) => {
-      setTimeout(resolve, duration);
-    });  
 
   const triggerReload = () => {
     if (typeof window !== "undefined") {
       window.location.reload();
     }
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
+    const file = e.target.files?.[0] || null;
+    setAttachment(file);
   };
 
   async function handleCommentSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -99,6 +114,9 @@ export default function RecipeDetailPage() {
     try {
       const formData = new FormData();
       formData.append("content", commentValue);
+      if(attachment){
+        formData.append('image', attachment)
+      }
       console.log(`Submitting comment "${commentValue}" for recipe ${activeId}`);
       const request = await api.put("recipe/comment/" + activeId, formData, {
         headers: {
@@ -134,14 +152,24 @@ export default function RecipeDetailPage() {
       triggerReload();
     }
   }
-  let image = placeholder
-  if(recipe != null && recipe.comments.length > 0 ){
-    recipe.comments.forEach(comment=>{
-      if(comment.image_url){
-        let image = comment.image_url
+   
+  const image = getImage(recipe)
+
+
+  async function handleDeleteComment(id:string){
+    if(confirm('Are you sure?')){
+      try{
+        await api.delete(`/recipe/comment/${activeId}/${id}`, {
+              headers: { Cookie: `access_token=${token}` },
+        });
+      } catch(e){
+        console.log(e)
+      } finally{
+        triggerReload();
       }
-    })
+    }
   }
+  console.log(recipe)
 
   return (
     <main className="min-h-screen bg-zinc-50">
@@ -237,7 +265,7 @@ export default function RecipeDetailPage() {
                 <ol className="space-y-3 text-sm text-zinc-600">
                   {recipe.instructions.map((instruction, index) => (
                     <li key={instruction} className="flex gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
                         {index + 1}
                       </span>
                       <span>{instruction}</span>
@@ -285,11 +313,43 @@ export default function RecipeDetailPage() {
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-zinc-800">{comment.username}</span>
-                        <span className="text-xs text-zinc-400">
+                        <span className="text-xs text-zinc-400 flex items-center gap-2">
+                          {
+                          <>
                           {new Date(comment.created_at).toLocaleDateString()}
+                          {
+                            comment.username === username && comment.id ? (
+                              <button
+                                className="hover:text-red-500 transition"
+                                onClick={() => handleDeleteComment(comment.id!)}
+                              >
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="currentColor"
+                                  className="w-5 h-5 transition"
+                                >
+                                  <path d="M14.2792,2C15.1401,2,15.9044,2.55086,16.1766,3.36754L16.7208,5L20,5C20.5523,5,21,5.44772,21,6C21,6.55227,20.5523,6.99998,20,7L19.9975,7.07125L19.1301,19.2137C19.018,20.7837,17.7117,22,16.1378,22H7.86224C6.28832,22,4.982,20.7837,4.86986,19.2137L4.00254,7.07125C4.00083,7.04735,3.99998,7.02359,3.99996,7C3.44769,6.99998,3,6.55227,3,6C3,5.44772,3.44772,5,4,5H7.27924L7.82339,3.36754C8.09562,2.55086,8.8599,2,9.72076,2H14.2792ZM17.9975,7H6.00255L6.86478,19.0712C6.90216,19.5946,7.3376,20,7.86224,20H16.1378C16.6624,20,17.0978,19.5946,17.1352,19.0712L17.9975,7ZM10,10C10.51285,10,10.9355092,10.386027,10.9932725,10.8833761L11,11V16C11,16.5523,10.5523,17,10,17C9.48715929,17,9.06449214,16.613973,9.00672766,16.1166239L9,16V11C9,10.4477,9.44771,10,10,10ZM14,10C14.5523,10,15,10.4477,15,11V16C15,16.5523,14.5523,17,14,17C13.4477,17,13,16.5523,13,16V11C13,10.4477,13.4477,10,14,10ZM14.2792,4H9.72076L9.38743,5H14.6126L14.2792,4Z" />
+                                </svg>
+                              </button>
+                            ) : <></>
+                          }
+                          </>
+                          }
                         </span>
                       </div>
                       <p className="mt-1 text-zinc-700">{comment.content}</p>
+                      {
+                        comment.image_url?
+                        <Image
+                          src={comment.image_url}
+                          alt='Comment image'
+                          width={200}
+                          height={200}
+                          className="object-cover rounded mt-3"
+                          style={{ maxHeight: "200px", width: "auto" }}
+                        />:<></>
+                      }
                     </li>
                   ))}
                 </ul>
@@ -313,14 +373,32 @@ export default function RecipeDetailPage() {
                     <span className="text-xs font-medium uppercase tracking-wide text-emerald-600">Sending…</span>
                   ) : null}
                 </div>
-                <textarea
-                  value={commentValue}
-                  onChange={(event) => setCommentValue(event.target.value)}
-                  className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                  rows={4}
-                  placeholder={isAuthenticated ? "Share what you tried or adjusted…" : "Log in to add a comment"}
-                  disabled={interactionsDisabled || isCommentSubmitting}
-                />
+                <div className="relative">
+                  <textarea
+                    value={commentValue}
+                    onChange={(event) => setCommentValue(event.target.value)}
+                    className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    rows={4}
+                    placeholder={isAuthenticated ? "Share what you tried or adjusted…" : "Log in to add a comment"}
+                    disabled={interactionsDisabled || isCommentSubmitting}
+                  />
+                  <div className="absolute bottom-3 right-2">
+                    <label className="bg-gray-100 hover:bg-gray-300 text-gray-700 rounded cursor-pointer">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 bi bi-upload" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                              <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z"/>
+                          </svg>
+                        <input type="file" className="hidden" onChange={onFileChange}/>
+                    </label>
+                  </div>
+                </div>
+                
+                <p className="w-full text-wrap break-words montserrat">
+                    {attachment 
+                      ? "Attached files: " + attachment.name
+                      : ""}
+                </p>
+                
                 <div className="flex justify-end">
                   <button
                     type="submit"

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { StarRating } from "@/components/widgets/StarRating";
 import { getFeedRecipes } from "@/data/recipes";
 import { placeholder } from "@/data/recipes";
+import getImage from "@/lib/getRecipeImage";
 
 
 
@@ -32,7 +33,7 @@ export function RecipeFeedWidget() {
               >
                 <div className="relative h-36 w-full overflow-hidden rounded-2xl sm:h-32 sm:w-36 lg:h-36 lg:w-40">
                   <Image
-                    src={placeholder} // TODO - fix this, use images from comments
+                    src={getImage(item)} 
                     alt={item.title}
                     fill
                     sizes="(min-width: 1024px) 160px, (min-width: 640px) 144px, 88vw"

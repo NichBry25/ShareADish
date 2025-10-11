@@ -59,9 +59,7 @@ def login_user(username: str, password: str):
 
     return {"access_token": token, "token_type": "bearer"}
 
-def get_current_user(request: Request): # mb bro i have to change this to a cookie based instead of header based
-    print()
-    print("Cookies:", request.cookies)
+def get_current_user(request: Request):
     token = request.cookies.get("access_token")
     if not token:
         raise HTTPException(

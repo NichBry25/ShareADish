@@ -43,6 +43,7 @@ let recipeDetails: WithSections[] = [];
 
 // SETTER
 export function setRecipes(apiRecipes: any[]) {
+  console.log('api recipe')
   console.log(apiRecipes);
 
   // 1. Build the full recipe list first without sections
@@ -59,8 +60,9 @@ export function setRecipes(apiRecipes: any[]) {
       fats: recipe.nutrition?.fats ?? "",
       calories: recipe.nutrition?.calories ?? "",
     },
-    comments: (recipe.comments ?? []).map((c: any) => ({
-      id: c.id,
+    comments: (recipe.comments ?? []).map((c: any) => (
+      {
+      id: c._id,
       username: c.username,
       content: c.content,
       created_at: c.created_at ? new Date(c.created_at) : new Date(),

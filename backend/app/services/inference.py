@@ -8,8 +8,6 @@ from openai import RateLimitError
 def parse_output(ai_output: str) -> Dict[str, Any]:
     try:
         output = json.loads(ai_output)
-        print(output)
-        print(type(output['ingredients']))
         if('error' in output.keys()):
             return output
         ingredients_nutrients=match_ingredients(output['ingredients'])

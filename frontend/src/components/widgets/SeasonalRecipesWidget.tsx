@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { StarRating } from "@/components/widgets/StarRating";
 import { getSeasonalRecipes } from "@/data/recipes";
 import { placeholder } from "@/data/recipes";
+import getImage from "@/lib/getRecipeImage";
 
 export function SeasonalRecipesWidget() {
   const recipes = getSeasonalRecipes()
@@ -25,7 +26,7 @@ export function SeasonalRecipesWidget() {
           >
             <div className="relative aspect-[4/3] w-full">
               <Image
-                src={placeholder} // TODO - fix this, use images from comments
+                src={getImage(recipe)} 
                 alt={recipe.title}
                 fill
                 sizes="(min-width: 1024px) 18rem, (min-width: 640px) 50vw, 100vw"
