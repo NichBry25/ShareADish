@@ -3,7 +3,7 @@ import { requireAuth } from "@/lib/auth/requireAuth";
 import RecipeAccountEditor from "./RecipeAccountEditor";
 import api from "@/lib/axios";
 interface AccountRecipePageProps {
-  params: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 }
 type CommentResponse = {
   id?: string;
