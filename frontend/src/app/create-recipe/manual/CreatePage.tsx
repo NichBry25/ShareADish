@@ -137,6 +137,7 @@ export default function CreateRecipeManual() {
           description: description, 
           ingredients: filledIngredients,
           nutrition: nutrition,
+          tags: selectedTags,
           instructions: filledSteps,
         })
         if(response.status >= 200 && response.status <=300){

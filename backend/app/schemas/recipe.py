@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timezone
 from bson import ObjectId
 from pydantic import BaseModel, Field
@@ -22,11 +22,11 @@ class CommentResponse(Comment):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
 
 class RatingCreate(BaseModel):
-    value: int
+    value: float
 
 class Rating(BaseModel):
     username: str
-    value: int
+    value: float
 
 # --- Recipe Models ---
 class RecipeBase(BaseModel):
@@ -54,7 +54,7 @@ class RecipeDB(RecipeBase):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
+    sections: Optional[List[str]] = ['feed']
     class Config:
         populate_by_name = True
         arbitrary_types_allowed = True

@@ -66,7 +66,7 @@ async def search_recipes(payload: RecipeSearch):
     return RecipeList(recipes=recipes)
 
 @router.put("/rate/{recipe_id}")
-async def like_recipe(recipe_id: str, rating:int = Query(..., ge=1, le=5), user: dict = Depends(get_current_user)):
+async def like_recipe(recipe_id: str, rating:float = Query(..., ge=1, le=5), user: dict = Depends(get_current_user)):
     recipe = recipe_db.find_one({"_id": recipe_id})
     
     if not recipe:

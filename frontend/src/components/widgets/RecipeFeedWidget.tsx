@@ -20,7 +20,9 @@ export function RecipeFeedWidget({ recipes }: Props) {
     <section>
       <h2 className="mb-4 text-lg font-semibold text-zinc-900">Feed</h2>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {list.map((r) => (
+        {list.map((r) => {
+          const author = r.created_by;
+          return(
           <Link
             key={r.id}
             href={`/view-recipe/${encodeURIComponent(r.id)}`}
@@ -35,6 +37,9 @@ export function RecipeFeedWidget({ recipes }: Props) {
               />
             </div>
             <div className="space-y-1 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-emerald-500">
+                        {author ?? "Unknown creator"}
+              </p>
               <h3 className="line-clamp-1 font-medium text-zinc-900">{r.title}</h3>
               <p className="line-clamp-2 text-sm text-zinc-600">{r.description}</p>
               <div className="mt-2 flex flex-wrap gap-1">
@@ -49,7 +54,8 @@ export function RecipeFeedWidget({ recipes }: Props) {
               </div>
             </div>
           </Link>
-        ))}
+        )}
+        )}
       </div>
     </section>
   );

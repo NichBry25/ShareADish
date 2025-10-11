@@ -118,6 +118,7 @@ export default function CreateRecipeAI({token}:CreatePageProp) {
           description: trimmedDescription, 
           ingredients: generatedRecipe?.ingredients,
           nutrition: generatedRecipe?.nutrition,
+          tags: tagList,
           instructions: generatedRecipe?.steps,
         })
         if(response.status >= 200 && response.status <=300){

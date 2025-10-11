@@ -18,7 +18,9 @@ export function SeasonalRecipesWidget() {
         <span className="text-sm font-semibold text-emerald-600">Summer Collection</span>
       </header>
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {recipes.map((recipe) => (
+        {recipes.map((recipe) => {
+          const author = recipe.created_by;
+          return(
           <Link
             key={recipe.id}
             href={`/view-recipe/${recipe.id}`}
@@ -35,6 +37,9 @@ export function SeasonalRecipesWidget() {
               />
             </div>
             <div className="flex flex-1 flex-col justify-between p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-emerald-500">
+                  {author ?? "Unknown creator"}
+              </p>
               <h3 className="text-base font-medium text-zinc-900">{recipe.title}</h3>
               <div className="mt-3 flex items-center justify-between text-sm">
                 <StarRating value={recipe.rating ?? 0} />
@@ -42,7 +47,8 @@ export function SeasonalRecipesWidget() {
               </div>
             </div>
           </Link>
-        ))}
+        )}
+        )}
       </div>
     </section>
   );
