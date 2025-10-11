@@ -27,8 +27,8 @@ async def login_route(response:Response, form_data: OAuth2PasswordRequestForm = 
             key="access_token",
             value=tokens["access_token"],
             httponly=True,
-            secure=False,  
-            samesite="lax",  
+            secure=True,  
+            samesite="none",  
             path="/"
         )
         return tokens
