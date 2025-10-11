@@ -10,7 +10,7 @@ from typing import Optional
 router = APIRouter(prefix="/recipe", tags=["recipe"])
 
 @router.get("/", response_model=RecipeList)
-async def return_all_recipe(limit: int = 10):
+async def return_all_recipe(limit: int = 100):
     """
     Fetch all recipes from the database with an optional limit.
     1. Query the database for recipes, limiting the number of results.
