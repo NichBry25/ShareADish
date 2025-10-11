@@ -4,13 +4,19 @@ import Link from "next/link";
 import { useEffect } from "react";
 import api from "@/lib/axios";
 import { setRecipes } from "@/data/recipes";
+import { useAuth } from "@/app/context/AuthContext";
 
 type UserRecipeProp={
     username:string
 }
 
 export default function UserRecipesWidget({ username }:UserRecipeProp){
-
+    const { token, isLoading: authLoading } = useAuth();
+    const triggerReload = () => {
+        if (typeof window !== "undefined") {
+        window.location.reload();
+        }
+    };
     useEffect(() => {
         const fetchRecipes = async () => {
         try {
@@ -25,6 +31,22 @@ export default function UserRecipesWidget({ username }:UserRecipeProp){
         fetchRecipes();
     }, []);
     const userRecipeList = getUserRecipeList(username)
+
+    const handleDelete = async (id:string, title:string) =>{
+        if(confirm(`Are you sure you want to delete ${title}?`)){
+            try{
+                await api.delete(`/recipe/${id}`, {
+                    headers: { Cookie: `access_token=${token}` },
+                });
+                
+            } catch(e){
+                console.log(e);
+            } finally {
+                triggerReload();
+            }
+        }
+    }
+
     return(
         <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
@@ -54,12 +76,20 @@ export default function UserRecipesWidget({ username }:UserRecipeProp){
                                     </span>
                                 ))}
                             </div>
-                            <Link
-                                href={`/your-account/recipes/${recipe.id}`}
-                                className="inline-flex items-center justify-center rounded-full border border-lime-300 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-lime-900 shadow-sm transition hover:border-lime-500 hover:bg-lime-50"
-                            >
-                                Edit recipe
-                            </Link>
+                            <div className="flex gap-2">
+                                <Link
+                                    href={`/your-account/recipes/${recipe.id}`}
+                                    className="inline-flex items-center justify-center rounded-full border border-lime-300 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-lime-900 shadow-sm transition hover:border-lime-500 hover:bg-lime-50"
+                                >
+                                    Edit recipe
+                                </Link>
+                                <button 
+                                    onClick={()=>handleDelete(recipe.id, recipe.title)}
+                                    className="inline-flex items-center justify-center rounded-full border border-red-300 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-red-900 shadow-sm transition hover:border-red-500 hover:bg-red-50"
+                                >
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                     </article>
                 ))}
