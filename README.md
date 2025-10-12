@@ -10,6 +10,7 @@ https://share-a-dish-demo.vercel.app/
 ## Table of Contents
 
 - [Ringkasan](#ringkasan)
+- [Fitur](#fitur)
 - [Teknologi](#teknologi)
 - [Instalasi local](#instalasi-local)
 - [Dampak dan Manfaat](#dampak-dan-manfaat)
@@ -27,6 +28,17 @@ Sampah makanan dan gizi buruk merupakan tantangan global yang besar. **931 juta*
 - Berbagi komunitas dan interaksi
 
 Platform ini berfungsi seperti **jejaring sosial** bagi penggemar makanan, memungkinkan pengguna untuk berbagi resep, berkomentar, menyukai, dan mengunggah gambar masakan mereka.
+
+## Fitur
+**AI Recipe Generation:** Menghasilkan resep berdasarkan bahan yang tersedia, preferensi diet (vegan, vegetarian, low-budget, dsb.), dan kebutuhan nutrisi.
+
+**Recipe Sharing:** Menyimpan dan membagikan resep kepada komunitas.
+
+**Interaksi Komunitas:** Memberi komentar, tips, dan mengunggah foto masakan.
+
+**Informasi Nutrisi:** Memberikan panduan nutrisi dasar untuk setiap resep, bahkan saat membuat resep secara manual.
+
+**Personalisasi:** Resep bisa dimodifikasi lebih lanjut menggunakan AI untuk hasil yang lebih sesuai.
 
 ## Teknologi
 Frontend: Next.js, Tailwind CSS
