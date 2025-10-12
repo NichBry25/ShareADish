@@ -70,7 +70,7 @@ export default function RecipeDetailPage() {
     const fetchUser = async () => {
       try {
         const res = await api.get("/user/me", {
-            headers: { Cookie: `access_token=${token}` },
+            headers: { Authorization: `access_token=${token}` },
         });
         if (res.status >= 200 && res.status <= 300) {
           setUsername(res.data.username);
@@ -160,7 +160,7 @@ export default function RecipeDetailPage() {
     if(confirm('Are you sure?')){
       try{
         await api.delete(`/recipe/comment/${activeId}/${id}`, {
-              headers: { Cookie: `access_token=${token}` },
+              headers: { Authorization: `access_token=${token}` },
         });
       } catch(e){
         console.log(e)
