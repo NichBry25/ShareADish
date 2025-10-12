@@ -101,12 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (typeof data.access_token === 'string') {
                     setToken(data.access_token);
                     await fetch('/api/login', {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ token }),
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: data.access_token }),
                     });
                 } else {
                     await refreshSession();

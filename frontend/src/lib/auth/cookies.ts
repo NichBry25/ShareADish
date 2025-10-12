@@ -7,7 +7,6 @@ export function applyAuthCookie(response: NextResponse, token: string): NextResp
     name: AUTH_COOKIE_NAME,
     value: token,
     httpOnly: true,
-    sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: AUTH_COOKIE_MAX_AGE,
