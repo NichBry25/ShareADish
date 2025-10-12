@@ -107,7 +107,7 @@ API_BASE_URL=http://localhost:8000
 ```
 
 3. **Instal Ketergantungan backend dan jalankan:**
-```
+```bash
 cd backend
 
 pip install -r requirements.txt
@@ -116,7 +116,7 @@ uvicorn app.main:app --reload
 ```
 
 4. **Instal Ketergantungan frontend dan jalankan:**
-```
+```bash
 cd ../frontend
 
 npm install
