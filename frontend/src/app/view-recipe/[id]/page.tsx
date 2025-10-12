@@ -38,6 +38,7 @@ export default function RecipeDetailPage() {
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
   const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [rated,setRated] = useState(0);
   
   useEffect(() => {
     const fetchAndSetRecipe = async () => {
@@ -70,7 +71,7 @@ export default function RecipeDetailPage() {
     const fetchUser = async () => {
       try {
         const res = await api.get("/user/me", {
-            headers: { Authorization: `access_token=${token}` },
+            headers: { Cookie: `access_token=${token}` },
         });
         if (res.status >= 200 && res.status <= 300) {
           setUsername(res.data.username);
@@ -118,16 +119,20 @@ export default function RecipeDetailPage() {
         formData.append('image', attachment)
       }
       console.log(`Submitting comment "${commentValue}" for recipe ${activeId}`);
-      const request = await api.put("recipe/comment/" + activeId, formData, {
+      const response = await api.put("recipe/comment/" + activeId, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log("Comment submitted:", request.data);
+      const newCommentFromResponse = response.data.comment;
+
+      setRecipe(prev => prev ? {
+        ...prev,
+        comments: [...prev.comments, newCommentFromResponse]
+      } : prev);
     } finally {
       setIsCommentSubmitting(false);
       setCommentValue("");
-      triggerReload();
     }
   }
 
@@ -149,18 +154,18 @@ export default function RecipeDetailPage() {
     } finally {
       setIsRatingSubmitting(false);
       setRatingValue("");
-      triggerReload();
+      setRated(1)
     }
   }
    
   const image = getImage(recipe)
 
-
+  
   async function handleDeleteComment(id:string){
     if(confirm('Are you sure?')){
       try{
         await api.delete(`/recipe/comment/${activeId}/${id}`, {
-              headers: { Authorization: `access_token=${token}` },
+              headers: { Cookie: `access_token=${token}` },
         });
       } catch(e){
         console.log(e)
@@ -208,7 +213,7 @@ export default function RecipeDetailPage() {
                 <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-sm">
                   <StarRating value={recipe.rating ?? 0} />
                   <span className="text-xs uppercase tracking-wide text-zinc-500">
-                    {(recipe.no_rated ?? 0).toLocaleString()} ratings
+                    {(recipe.no_rated?recipe.no_rated+rated: 0).toLocaleString()} ratings
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">

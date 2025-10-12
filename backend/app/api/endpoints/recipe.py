@@ -111,7 +111,7 @@ async def comment_recipe(recipe_id: str, content: str = Form(...), image: Option
         {"_id": recipe_id},
         {"$push": {"comments": comment_db}}
     )
-    return {"message": "Comment added successfully"}
+    return {"message": "Comment added successfully", "comment": comment_db}
 
 @router.delete("/comment/{recipe_id}/{comment_id}")
 async def delete_comment(recipe_id: str, comment_id: str, user: dict = Depends(get_current_user)):
