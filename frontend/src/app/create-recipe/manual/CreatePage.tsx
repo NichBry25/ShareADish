@@ -159,7 +159,7 @@ export default function CreateRecipeManual() {
   };
 
   const handleRefreshNutritional = async () => {
-    const res = await api.post('/nutrition', {ingredients:ingredients.map(item=>item.value)})
+    const res = await api.post('/nutrition/', {ingredients:ingredients.map(item=>item.value)})
     if(res.status >= 200 && res.status <= 300){
       const data = res.data
       setNutrition({
