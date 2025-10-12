@@ -4,29 +4,16 @@ import { applyAuthCookie } from "@/lib/auth/cookies";
 import { createMockToken } from "@/lib/auth/token";
 
 type LoginPayload = {
-    username?: string;
-    password?: string;
+    token: string
 };
 
 export async function POST(req: Request){
-    const { username, password }: LoginPayload = await req.json();
-
-    if (!username || !password){
-        return NextResponse.json(
-            { success: false, error: 'Please provide both a username and password.' },
-            { status: 400 }
-        );
-    }
-
-    const fakeToken = createMockToken(username);
+    const { token }: LoginPayload = await req.json();
 
     const response = NextResponse.json({
         success: true,
-        token: fakeToken,
-        user: {
-            username,
-        },
+        token: token,
     });
 
-    return applyAuthCookie(response, fakeToken);
+    return applyAuthCookie(response, token);
 }

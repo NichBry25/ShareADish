@@ -100,6 +100,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 console.log(data.access_token)
                 if (typeof data.access_token === 'string') {
                     setToken(data.access_token);
+                    await fetch('/api/login', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ token }),
+                    });
                 } else {
                     await refreshSession();
                 }
@@ -117,15 +125,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     const login = useCallback(
-        async (username: string, password: string) => {
-            const result = await handleAuthRequest('/user/login', { username, password });
-            if (result.success) {
-            await refreshSession();
-            }
-            return result;
-        },
-        [handleAuthRequest, refreshSession]
-        );
+        (username: string, password: string) => handleAuthRequest('/user/login', { username, password }),
+        [handleAuthRequest]
+    );
 
     const signup = useCallback(
         (username: string, password: string) => handleAuthRequest('/user/', { username, password }),
