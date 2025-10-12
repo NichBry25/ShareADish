@@ -117,9 +117,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     const login = useCallback(
-        (username: string, password: string) => handleAuthRequest('/user/login', { username, password }),
-        [handleAuthRequest]
-    );
+        async (username: string, password: string) => {
+            const result = await handleAuthRequest('/user/login', { username, password });
+            if (result.success) {
+            await refreshSession();
+            }
+            return result;
+        },
+        [handleAuthRequest, refreshSession]
+        );
 
     const signup = useCallback(
         (username: string, password: string) => handleAuthRequest('/user/', { username, password }),
