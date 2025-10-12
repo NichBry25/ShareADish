@@ -5,6 +5,7 @@ from ...schemas import RecipeCreate,RecipeUpdate, ErrorResponse, RecipeDB, Recip
 from ...database import recipe_db
 from ...services import save_new_recipe
 from ...services.image import upload, delete
+from bson import ObjectId
 from typing import Optional
 
 router = APIRouter(prefix="/recipe", tags=["recipe"])
@@ -101,17 +102,20 @@ async def comment_recipe(recipe_id: str, content: str = Form(...), image: Option
         url = await upload(file_bytes)
     
     comment_doc = {
+        "_id": str(ObjectId()),
         'username':user['username'],
         'content':content,
         'image_url':url
     }
-
     comment_db= CommentCreate.model_validate(comment_doc).model_dump(by_alias=True)
     recipe_db.update_one(
         {"_id": recipe_id},
         {"$push": {"comments": comment_db}}
     )
-    return {"message": "Comment added successfully", "comment": comment_db}
+    frontend_comment = dict(comment_db)  
+    frontend_comment["id"] = frontend_comment.pop("_id")
+
+    return {"message": "Comment added successfully", "comment": frontend_comment}
 
 @router.delete("/comment/{recipe_id}/{comment_id}")
 async def delete_comment(recipe_id: str, comment_id: str, user: dict = Depends(get_current_user)):

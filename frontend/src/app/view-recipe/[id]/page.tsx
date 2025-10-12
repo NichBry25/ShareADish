@@ -95,12 +95,6 @@ export default function RecipeDetailPage() {
     : undefined;
 
 
-  const triggerReload = () => {
-    if (typeof window !== "undefined") {
-      window.location.reload();
-    }
-  };
-
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
     const file = e.target.files?.[0] || null;
     setAttachment(file);
@@ -146,6 +140,7 @@ export default function RecipeDetailPage() {
       console.log(`Submitting rating ${ratingValue} for recipe ${activeId}`);
       await api.put(`/recipe/rate/${activeId}?rating=${ratingValue}`);
       alert("Rating submitted! Thank you for your feedback.");
+      setRated(1)
     } catch (error: any) {
       if (error.response && error.response.status === 400) {
         const message = error.response.data?.detail;
@@ -154,7 +149,6 @@ export default function RecipeDetailPage() {
     } finally {
       setIsRatingSubmitting(false);
       setRatingValue("");
-      setRated(1)
     }
   }
    
@@ -170,11 +164,13 @@ export default function RecipeDetailPage() {
       } catch(e){
         console.log(e)
       } finally{
-        triggerReload();
+        setRecipe(prev => prev ? {
+        ...prev,
+        comments: prev.comments.filter(comment => comment.id !== id)
+        } : prev);
       }
     }
   }
-  console.log(recipe)
 
   return (
     <main className="min-h-screen bg-zinc-50">
