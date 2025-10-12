@@ -7,7 +7,7 @@ Share a Dish adalah platform web berbasis AI yang membantu pengguna membuat, men
 **Website Demo:** 
 https://share-a-dish-demo.vercel.app/ 
 
-## Table of Contents
+## Daftar isi
 
 - [Ringkasan](#ringkasan)
 - [Fitur](#fitur)
