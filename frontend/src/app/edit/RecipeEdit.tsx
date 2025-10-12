@@ -114,7 +114,7 @@ export default function RecipeEdit({recipe, onSubmit}:RecipeEditProps) {
   };
 
   const handleRefreshNutritional = async () => {
-    const res = await api.post('/nutrition', {ingredients:filledIngredients})
+    const res = await api.post('/nutrition/', {ingredients:filledIngredients})
     if(res.status >= 200 && res.status <= 300){
       const data = res.data
       setNutrition({
